@@ -3,6 +3,8 @@
 
 #include <string>
 
+using namespace std;
+
 /**
  * Класс Car
  * Представляет автомобиль клиента
@@ -10,10 +12,10 @@
 class Car {
 private:
     int id;
-    std::string brand;      // Марка
-    std::string model;      // Модель
+    string brand;      // Марка
+    string model;      // Модель
     int year;               // Год выпуска
-    std::string regNumber;  // Госномер
+    string regNumber;  // Госномер
     int clientId;           // ID владельца
     static int nextId;
 
@@ -22,8 +24,8 @@ public:
     Car();
     
     // Параметризованный конструктор
-    Car(int id, const std::string& brand, const std::string& model,
-        int year, const std::string& regNumber, int clientId);
+    Car(int id, const string& brand, const string& model,
+        int year, const string& regNumber, int clientId);
     
     // Конструктор копирования
     Car(const Car& other);
@@ -36,30 +38,30 @@ public:
     
     // Геттеры
     int getId() const;
-    std::string getBrand() const;
-    std::string getModel() const;
+    string getBrand() const;
+    string getModel() const;
     int getYear() const;
-    std::string getRegNumber() const;
+    string getRegNumber() const;
     int getClientId() const;
     
     // Сеттеры
-    void setBrand(const std::string& brand);
-    void setModel(const std::string& model);
+    void setBrand(const string& brand);
+    void setModel(const string& model);
     void setYear(int year);
-    void setRegNumber(const std::string& regNumber);
+    void setRegNumber(const string& regNumber);
     void setClientId(int clientId);
     
     // Получение полной информации
-    std::string getInfo() const;
+    string getInfo() const;
     
     // Получение краткой информации
-    std::string getShortInfo() const;
+    string getShortInfo() const;
     
     // Сериализация
-    std::string serialize() const;
+    string serialize() const;
     
     // Статический метод десериализации
-    static Car deserialize(const std::string& data);
+    static Car deserialize(const string& data);
     
     // Статический метод для получения следующего ID
     static int getNextId();

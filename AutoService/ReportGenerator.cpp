@@ -1,4 +1,4 @@
-#include "../include/ReportGenerator.h"
+#include "include/ReportGenerator.h"
 #include <sstream>
 #include <iomanip>
 #include <fstream>
@@ -7,50 +7,46 @@
 #include <algorithm>
 
 // Вспомогательный метод для создания разделительной линии
-std::string ReportGenerator::createLine(int length, char ch) {
-    return std::string(length, ch);
+string ReportGenerator::createLine(int length, char ch) {
+    return string(length, ch);
 }
 
 // Форматирование денежной суммы
-std::string ReportGenerator::formatMoney(double amount) {
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(2) << amount << " BYN";
+string ReportGenerator::formatMoney(double amount) {
+    ostringstream oss;
+    oss << fixed << setprecision(2) << amount << " BYN";
     return oss.str();
 }
 
 // Получение текущей даты
-std::string ReportGenerator::getCurrentDate() {
+string ReportGenerator::getCurrentDate() {
     time_t now = time(0);
-    std::ostringstream oss;
+    ostringstream oss;
     #ifdef _WIN32
         tm ltm;
         localtime_s(&ltm, &now);
-        oss << std::setfill('0') << std::setw(2) << ltm.tm_mday << "."
-            << std::setfill('0') << std::setw(2) << (1 + ltm.tm_mon) << "."
+        oss << setfill('0') << setw(2) << ltm.tm_mday << "."
+            << setfill('0') << setw(2) << (1 + ltm.tm_mon) << "."
             << (1900 + ltm.tm_year);
     #else
         tm* ltm = localtime(&now);
-        oss << std::setfill('0') << std::setw(2) << ltm->tm_mday << "."
-            << std::setfill('0') << std::setw(2) << (1 + ltm->tm_mon) << "."
+        oss << setfill('0') << setw(2) << ltm->tm_mday << "."
+            << setfill('0') << setw(2) << (1 + ltm->tm_mon) << "."
             << (1900 + ltm->tm_year);
     #endif
     return oss.str();
 }
 
-// Формирование квитанции
-std::string ReportGenerator::generateReceipt(int orderId) {
+// ============================================================================
+// ПЕЧАТНАЯ ФОРМА: КВИТАНЦИЯ
+// ============================================================================
+string ReportGenerator::generateReceipt(int orderId) {
     DataManager& dm = DataManager::getInstance();
     const ServiceOrder* order = dm.findOrderById(orderId);
     
     if (!order) {
         return "ОШИБКА: Заявка не найдена!";
     }
-    /*
-    if (order->getStatus() != OrderStatus::COMPLETED && 
-        order->getStatus() != OrderStatus::ISSUED) {
-        return "ОШИБКА: Заявка ещё не выполнена!";
-    }
-    */
     
     const Client* client = dm.findClientById(order->getClientId());
     const Car* car = dm.findCarById(order->getCarId());
@@ -60,121 +56,133 @@ std::string ReportGenerator::generateReceipt(int orderId) {
         return "ОШИБКА: Данные клиента или автомобиля не найдены!";
     }
     
-    std::ostringstream oss;
-    std::string line = createLine(70, '=');
-    std::string thinLine = createLine(70, '-');
+    ostringstream oss;
+    string line = createLine(70, '=');
+    string thinLine = createLine(63, '-');
     
-    oss << "\n" << line << "\n";
-    oss << "                         КВИТАНЦИЯ № " << std::setfill('0') << std::setw(5) << orderId << "\n";
-    oss << line << "\n";
-    oss << "                    Автосервис \"АвтоМастер\"\n";
-    oss << line << "\n\n";
-    
-    oss << "  Дата оформления: " << order->getDate() << "\n";
-    oss << "  Дата выдачи:     " << getCurrentDate() << "\n\n";
-    
-    oss << thinLine << "\n";
-    oss << "  ЗАКАЗЧИК\n";
-    oss << thinLine << "\n";
-    oss << "  ФИО:      " << client->getName() << "\n";
-    oss << "  Телефон:  " << client->getPhone() << "\n";
-    if (client->getDiscount() > 0) {
-        oss << "  Скидка:   Постоянный клиент (" << std::fixed << std::setprecision(1) 
-            << client->getDiscount() << "%)\n";
-    }
+    // Заголовок
+    oss << "\n " << line << "\n";
+    oss << "  КВИТАНЦИЯ\n";
+    oss << "  Автосервис \"АвтоМастер\"\n";
+    oss << " " << line << "\n";
     oss << "\n";
     
-    oss << thinLine << "\n";
-    oss << "  АВТОМОБИЛЬ\n";
-    oss << thinLine << "\n";
-    oss << "  Марка:    " << car->getBrand() << "\n";
-    oss << "  Модель:   " << car->getModel() << "\n";
-    oss << "  Год:      " << car->getYear() << "\n";
-    oss << "  Госномер: " << car->getRegNumber() << "\n\n";
+    // Информация о заявке
+    oss << "  Заявка № " << orderId << " от " << order->getDate() << "\n";
+    oss << "\n";
     
-    oss << thinLine << "\n";
-    oss << "  ВЫПОЛНЕННЫЕ РАБОТЫ\n";
-    oss << thinLine << "\n";
+    // Данные клиента
+    oss << "  Клиент: " << client->getName() << "\n";
+    oss << "  Телефон: " << client->getPhone() << "\n";
+    oss << "\n";
+    
+    // Данные автомобиля
+    oss << "  Автомобиль: " << car->getBrand() << " " << car->getModel() << "\n";
+    oss << "  Год выпуска: " << car->getYear() << "\n";
+    oss << "  Госномер: " << car->getRegNumber() << "\n";
+    oss << "\n";
+    
+    // Выполненные работы
+    oss << " " << thinLine << "\n";
+    oss << "  ВЫПОЛНЕННЫЕ РАБОТЫ:\n";
+    oss << " " << thinLine << "\n";
     
     double subtotal = 0.0;
     int num = 1;
-    std::vector<int> serviceIds = order->getServiceIds();
+    vector<int> serviceIds = order->getServiceIds();
     
-    oss << std::setfill(' ') << std::left;  // сбросить fill и установить left по умолчанию
-
     for (int serviceId : serviceIds) {
         const ServiceType* service = dm.findServiceTypeById(serviceId);
         if (service) {
-            oss << "  " << num++ << ". " << std::left << std::setw(45) << service->getName()
-                << std::right << std::setw(11) << formatMoney(service->getPrice()) << "\n";
+            string serviceName = service->getName();
+            // Формируем строку с точками
+            int dotsCount = 45 - static_cast<int>(serviceName.length());
+            if (dotsCount < 3) dotsCount = 3;
+            string dots(dotsCount, '.');
+            
+            oss << "  " << num++ << ". " << serviceName << " " << dots << " "
+                << fixed << setprecision(2) << service->getPrice() << " BYN\n";
             subtotal += service->getPrice();
         }
     }
     
-    oss << thinLine << "\n\n";
+    oss << " " << thinLine << "\n";
     
+    // Итоги
     double discount = client->getDiscount();
     double discountAmount = subtotal * discount / 100.0;
     double total = subtotal - discountAmount;
     
-    oss << std::right;
-    oss << "  Итого:                                            " << formatMoney(subtotal) << "\n";
+    oss << "  Итого: " << fixed << setprecision(2) << subtotal << " BYN\n";
     
     if (discount > 0) {
-        oss << "  Скидка (" << std::fixed << std::setprecision(1) << discount << "%):";
-        oss << std::setw(43) << ("-" + formatMoney(discountAmount)) << "\n";
+        oss << "  Скидка постоянного клиента (" << fixed << setprecision(0) 
+            << discount << "%): -" << fixed << setprecision(2) << discountAmount << " BYN\n";
     }
     
-    oss << "  " << createLine(60, '-') << "\n";
-    oss << "  ИТОГО К ОПЛАТЕ:                                   " << formatMoney(total) << "\n";
-    oss << "  " << createLine(60, '-') << "\n\n";
+    oss << " " << thinLine << "\n";
+    oss << "  ИТОГО К ОПЛАТЕ: " << fixed << setprecision(2) << total << " BYN\n";
+    oss << " " << thinLine << "\n";
+    oss << "\n";
     
+    // Исполнитель
     if (employee) {
-        oss << "  Исполнитель: " << employee->getName() << "\n\n";
+        string fullName = employee->getName();
+        string shortName = fullName;
+        size_t space1 = fullName.find(' ');
+        if (space1 != string::npos) {
+            string surname = fullName.substr(0, space1);
+            string rest = fullName.substr(space1 + 1);
+            size_t space2 = rest.find(' ');
+            if (space2 != string::npos) {
+                shortName = surname + " " + rest[0] + "." + rest[space2 + 1] + ".";
+            } else if (rest.length() > 0) {
+                shortName = surname + " " + rest[0] + ".";
+            }
+        }
+        oss << "  Исполнитель: " << shortName << "\n";
     }
     
-    oss << "  Гарантия: 30 дней на выполненные работы\n\n";
-    
-    oss << "  Работу сдал:  ___________________ / " 
-        << (employee ? employee->getName().substr(0, employee->getName().find(' ')) : "________") << " /\n\n";
-    oss << "  Работу принял, претензий не имею:\n\n";
-    oss << "                ___________________ / " 
-        << client->getName().substr(0, client->getName().find(' ')) << " /\n\n";
-    
-    oss << line << "\n";
-    oss << "                 Благодарим за обращение!\n";
-    oss << line << "\n";
+    oss << "  Дата выдачи: " << getCurrentDate() << "\n";
+    oss << "\n";
+    oss << "  Подпись клиента: _______________\n";
+    oss << "\n";
     
     return oss.str();
 }
 
-// Формирование отчёта по выручке
-std::string ReportGenerator::generateRevenueReport(const std::string& startDate,
-                                                    const std::string& endDate) {
+// ============================================================================
+// ПЕЧАТНАЯ ФОРМА: ОТЧЁТ ПО ВЫРУЧКЕ ЗА ПЕРИОД
+// ============================================================================
+string ReportGenerator::generateRevenueReport(const string& startDate,
+                                                    const string& endDate) {
     DataManager& dm = DataManager::getInstance();
-    std::vector<ServiceOrder> allOrders = dm.getOrders();
+    vector<ServiceOrder> allOrders = dm.getOrders();
     
-    std::ostringstream oss;
-    std::string line = createLine(70, '=');
-    std::string thinLine = createLine(70, '-');
+    ostringstream oss;
+    string line = createLine(70, '=');
+    string thinLine = createLine(63, '-');
     
-    oss << "\n" << line << "\n";
-    oss << "                  ОТЧЁТ ПО ВЫРУЧКЕ ЗА ПЕРИОД\n";
-    oss << line << "\n\n";
+    // Заголовок
+    oss << "\n " << line << "\n";
+    oss << "  ОТЧЁТ ПО ВЫРУЧКЕ ЗА ПЕРИОД\n";
+    oss << " " << line << "\n";
+    oss << "\n";
     
+    // Период
     oss << "  Период: с " << startDate << " по " << endDate << "\n";
-    oss << "  Дата формирования: " << getCurrentDate() << "\n\n";
+    oss << "\n";
     
+    // Подсчёт статистики
     int totalOrders = 0;
     int completedOrders = 0;
     int inProgressOrders = 0;
     int newOrders = 0;
-    double totalRevenue = 0.0;
+    double totalWithoutDiscount = 0.0;
     double totalDiscount = 0.0;
     
     for (const auto& order : allOrders) {
-        // Простая проверка даты (формат ДД.ММ.ГГГГ)
-        std::string orderDate = order.getDate();
+        string orderDate = order.getDate();
         if (orderDate >= startDate && orderDate <= endDate) {
             totalOrders++;
             
@@ -188,7 +196,6 @@ std::string ReportGenerator::generateRevenueReport(const std::string& startDate,
                 case OrderStatus::COMPLETED:
                 case OrderStatus::ISSUED:
                     completedOrders++;
-                    // Считаем выручку только по выполненным заявкам
                     {
                         const Client* client = dm.findClientById(order.getClientId());
                         double orderTotal = 0.0;
@@ -198,53 +205,62 @@ std::string ReportGenerator::generateRevenueReport(const std::string& startDate,
                                 orderTotal += service->getPrice();
                             }
                         }
+                        totalWithoutDiscount += orderTotal;
                         double discount = client ? client->getDiscount() : 0.0;
                         double discountAmount = orderTotal * discount / 100.0;
                         totalDiscount += discountAmount;
-                        totalRevenue += (orderTotal - discountAmount);
                     }
                     break;
             }
         }
     }
     
-    oss << thinLine << "\n";
-    oss << "  СТАТИСТИКА ПО ЗАЯВКАМ\n";
-    oss << thinLine << "\n";
-    oss << "  Всего заявок за период:        " << std::setw(10) << totalOrders << "\n";
-    oss << "  Из них:\n";
-    oss << "    - выполнено и выдано:        " << std::setw(10) << completedOrders << "\n";
-    oss << "    - в работе:                  " << std::setw(10) << inProgressOrders << "\n";
-    oss << "    - новых:                     " << std::setw(10) << newOrders << "\n\n";
+    double totalRevenue = totalWithoutDiscount - totalDiscount;
     
-    oss << thinLine << "\n";
-    oss << "  ФИНАНСОВЫЕ ПОКАЗАТЕЛИ\n";
-    oss << thinLine << "\n";
-    oss << "  Сумма предоставленных скидок:  " << std::setw(18) << formatMoney(totalDiscount) << "\n";
-    oss << "  " << createLine(50, '-') << "\n";
-    oss << "  ИТОГО ВЫРУЧКА:                 " << std::setw(18) << formatMoney(totalRevenue) << "\n\n";
+    // Статистика по заявкам
+    oss << " " << thinLine << "\n";
+    oss << "\n";
+    oss << "  Всего заявок за период: " << totalOrders << "\n";
+    oss << "  Из них выполнено: " << completedOrders << "\n";
+    oss << "  В работе: " << inProgressOrders << "\n";
+    oss << "  Новых: " << newOrders << "\n";
+    oss << "\n";
+    oss << " " << thinLine << "\n";
+    oss << "\n";
     
+    // Финансовые показатели
+    oss << "  Выручка по выполненным заявкам:\n";
+    oss << "\n";
+    oss << "  Сумма без учёта скидок: " << fixed << setprecision(2) << totalWithoutDiscount << " BYN\n";
+    oss << "  Сумма предоставленных скидок: " << fixed << setprecision(2) << totalDiscount << " BYN\n";
+    oss << " " << thinLine << "\n";
+    oss << "  ИТОГО ВЫРУЧКА: " << fixed << setprecision(2) << totalRevenue << " BYN\n";
+    oss << "\n";
+    oss << " " << thinLine << "\n";
+    
+    // Средний чек
     if (completedOrders > 0) {
         double avgCheck = totalRevenue / completedOrders;
-        oss << "  Средний чек:                   " << std::setw(18) << formatMoney(avgCheck) << "\n";
+        oss << "  Средний чек: " << fixed << setprecision(2) << avgCheck << " BYN\n";
     }
-    
-    oss << "\n" << line << "\n";
+    oss << "\n";
     
     return oss.str();
 }
 
-// Формирование статистики по видам работ
-std::string ReportGenerator::generateServiceStatistics(const std::string& startDate,
-                                                        const std::string& endDate) {
+// ============================================================================
+// ПЕЧАТНАЯ ФОРМА: СТАТИСТИКА ПО ВИДАМ РАБОТ
+// ============================================================================
+string ReportGenerator::generateServiceStatistics(const string& startDate,
+                                                        const string& endDate) {
     DataManager& dm = DataManager::getInstance();
-    std::vector<ServiceOrder> allOrders = dm.getOrders();
+    vector<ServiceOrder> allOrders = dm.getOrders();
     
     // Собираем статистику: serviceId -> {count, totalAmount}
-    std::map<int, std::pair<int, double>> stats;
+    map<int, pair<int, double>> stats;
     
     for (const auto& order : allOrders) {
-        std::string orderDate = order.getDate();
+        string orderDate = order.getDate();
         if (orderDate >= startDate && orderDate <= endDate) {
             if (order.getStatus() == OrderStatus::COMPLETED || 
                 order.getStatus() == OrderStatus::ISSUED) {
@@ -259,30 +275,36 @@ std::string ReportGenerator::generateServiceStatistics(const std::string& startD
         }
     }
     
-    std::ostringstream oss;
-    std::string line = createLine(75, '=');
-    std::string thinLine = createLine(75, '-');
+    ostringstream oss;
+    string line = createLine(70, '=');
+    string thinLine = createLine(62, '-');
     
-    oss << "\n" << line << "\n";
-    oss << "                   СТАТИСТИКА ПО ВИДАМ РАБОТ\n";
-    oss << line << "\n\n";
+    // Заголовок
+    oss << "\n " << line << "\n";
+    oss << "  СТАТИСТИКА ПО ВИДАМ РАБОТ\n";
+    oss << "  Период: c " << startDate << " по " << endDate << "\n";
+    oss << " " << line << "\n";
+    oss << "\n";
     
-    oss << "  Период: с " << startDate << " по " << endDate << "\n";
-    oss << "  Дата формирования: " << getCurrentDate() << "\n\n";
-    
-    oss << thinLine << "\n";
-    oss << "  " << std::left << std::setw(5) << "№"
-        << std::setw(40) << "Вид работы"
-        << std::right << std::setw(10) << "Кол-во"
-        << std::setw(15) << "Сумма" << "\n";
-    oss << thinLine << "\n";
+    // Заголовок таблицы
+    oss << "  " << left << setw(3) << "№"
+        << setw(32) << "Вид работы"
+        << right << setw(8) << "Кол-во"
+        << setw(12) << "Сумма"
+        << setw(10) << "Доля, %" << "\n";
+    oss << " " << thinLine << "\n";
     
     double grandTotal = 0.0;
     int totalCount = 0;
-    int num = 1;
+    
+    // Сначала посчитаем общую сумму для процентов
+    for (const auto& stat : stats) {
+        grandTotal += stat.second.second;
+        totalCount += stat.second.first;
+    }
     
     // Собираем в вектор для сортировки
-    std::vector<std::tuple<int, std::string, int, double>> sortedStats;
+    vector<tuple<int, string, int, double>> sortedStats;
     for (const auto& stat : stats) {
         const ServiceType* service = dm.findServiceTypeById(stat.first);
         if (service) {
@@ -291,46 +313,44 @@ std::string ReportGenerator::generateServiceStatistics(const std::string& startD
         }
     }
     
-    // Сортируем по количеству (по убыванию)
-    std::sort(sortedStats.begin(), sortedStats.end(),
+    // Сортируем по сумме (по убыванию)
+    sort(sortedStats.begin(), sortedStats.end(),
         [](const auto& a, const auto& b) {
-            return std::get<2>(a) > std::get<2>(b);
+            return get<3>(a) > get<3>(b);
         });
     
+    int num = 1;
     for (const auto& item : sortedStats) {
-        oss << "  " << std::left << std::setw(5) << num++
-            << std::setw(40) << std::get<1>(item)
-            << std::right << std::setw(10) << std::get<2>(item)
-            << std::setw(15) << formatMoney(std::get<3>(item)) << "\n";
-        totalCount += std::get<2>(item);
-        grandTotal += std::get<3>(item);
-    }
-    
-    oss << thinLine << "\n";
-    oss << "  " << std::left << std::setw(45) << "ИТОГО:"
-        << std::right << std::setw(10) << totalCount
-        << std::setw(15) << formatMoney(grandTotal) << "\n";
-    oss << thinLine << "\n\n";
-    
-    // Процентное распределение
-    if (grandTotal > 0) {
-        oss << "  РАСПРЕДЕЛЕНИЕ ПО ДОЛЕ ВЫРУЧКИ:\n\n";
-        for (const auto& item : sortedStats) {
-            double percent = (std::get<3>(item) / grandTotal) * 100.0;
-            int barLength = static_cast<int>(percent / 2);
-            oss << "  " << std::left << std::setw(25) << std::get<1>(item).substr(0, 24)
-                << " " << std::string(barLength, '#')
-                << " " << std::fixed << std::setprecision(1) << percent << "%\n";
+        string serviceName = get<1>(item);
+        if (serviceName.length() > 30) {
+            serviceName = serviceName.substr(0, 28) + "..";
         }
+        
+        double percent = grandTotal > 0 ? (get<3>(item) / grandTotal) * 100.0 : 0.0;
+        
+        oss << "  " << left << setw(3) << num++
+            << setw(32) << serviceName
+            << right << setw(8) << get<2>(item)
+            << setw(12) << fixed << setprecision(2) << get<3>(item)
+            << setw(9) << fixed << setprecision(1) << percent << "%" << "\n";
     }
     
-    oss << "\n" << line << "\n";
+    oss << " " << thinLine << "\n";
+    
+    // Итого
+    oss << "  " << left << setw(35) << "ИТОГО:"
+        << right << setw(8) << totalCount
+        << setw(12) << fixed << setprecision(2) << grandTotal
+        << setw(9) << "100.0" << "%" << "\n";
+    oss << "\n";
     
     return oss.str();
 }
 
-// Сохранение квитанции в HTML
-bool ReportGenerator::saveReceiptToHtml(int orderId, const std::string& filename) {
+// ============================================================================
+// HTML: КВИТАНЦИЯ
+// ============================================================================
+bool ReportGenerator::saveReceiptToHtml(int orderId, const string& filename) {
     DataManager& dm = DataManager::getInstance();
     const ServiceOrder* order = dm.findOrderById(orderId);
     
@@ -342,65 +362,92 @@ bool ReportGenerator::saveReceiptToHtml(int orderId, const std::string& filename
     
     if (!client || !car) return false;
     
-    std::ofstream file(filename);
+    ofstream file(filename);
     if (!file.is_open()) return false;
     
     file << "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n";
-    file << "<title>Квитанция №" << std::setfill('0') << std::setw(5) << orderId << "</title>\n";
+    file << "<meta charset=\"windows-1251\">\n";
+    file << "<title>Квитанция №" << orderId << "</title>\n";
     file << "<style>\n";
-    file << "body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 10px; }\n";
-    file << "h1 { text-align: center; font-size: 1.2em; }\n";
-    file << "table { width: 100%; border-collapse: collapse; margin: 10px 0; }\n";
-    file << "th, td { border: 1px solid #ddd; padding: 4px; text-align: left; }\n";
-    file << "th { background-color: #f2f2f2; }\n";
-    file << ".total { font-weight: bold; font-size: 1.2em; }\n";
-    file << ".header { text-align: center; margin-bottom: 10px; }\n";
+    file << "body { font-family: 'Courier New', monospace; max-width: 600px; margin: 20px auto; padding: 20px; }\n";
+    file << ".line { border-top: 2px solid #000; margin: 10px 0; }\n";
+    file << ".thin-line { border-top: 1px dashed #000; margin: 10px 0; }\n";
+    file << ".center { text-align: center; }\n";
+    file << ".header { font-weight: bold; font-size: 16px; }\n";
+    file << ".work-item { display: flex; justify-content: space-between; }\n";
+    file << ".total { font-weight: bold; }\n";
     file << "</style>\n</head>\n<body>\n";
     
-    file << "<div class=\"header\">\n";
-    file << "<h1>КВИТАНЦИЯ № " << std::setfill('0') << std::setw(5) << orderId << "</h1>\n";
-    file << "<p>Автосервис \"АвтоМастер\"";
-    file << "</div>\n";
+    // Заголовок
+    file << "<div class=\"line\"></div>\n";
+    file << "<div class=\"center header\">КВИТАНЦИЯ</div>\n";
+    file << "<div class=\"center\">Автосервис \"АвтоМастер\"</div>\n";
+    file << "<div class=\"line\"></div>\n";
     
-    file << "<h3>Заказчик</h3>\n";
-    file << "<p>ФИО: " << client->getName() << "<br>\n";
+    // Информация о заявке
+    file << "<p>Заявка № " << orderId << " от " << order->getDate() << "</p>\n";
+    
+    // Данные клиента
+    file << "<p>Клиент: " << client->getName() << "<br>\n";
     file << "Телефон: " << client->getPhone() << "</p>\n";
     
-    file << "<h3>Автомобиль</h3>\n";
-    file << "<p>" << car->getBrand() << " " << car->getModel() << " (" << car->getYear() << ")<br>\n";
+    // Данные авто
+    file << "<p>Автомобиль: " << car->getBrand() << " " << car->getModel() << "<br>\n";
+    file << "Год выпуска: " << car->getYear() << "<br>\n";
     file << "Госномер: " << car->getRegNumber() << "</p>\n";
     
-    file << "<h3>Выполненные работы</h3>\n";
-    file << "<table>\n<tr><th>№</th><th>Наименование</th><th>Стоимость</th></tr>\n";
+    // Выполненные работы
+    file << "<div class=\"thin-line\"></div>\n";
+    file << "<div class=\"header\">ВЫПОЛНЕННЫЕ РАБОТЫ:</div>\n";
+    file << "<div class=\"thin-line\"></div>\n";
     
     double subtotal = 0.0;
     int num = 1;
     for (int serviceId : order->getServiceIds()) {
         const ServiceType* service = dm.findServiceTypeById(serviceId);
         if (service) {
-            file << "<tr><td>" << num++ << "</td><td>" << service->getName() 
-                 << "</td><td>" << formatMoney(service->getPrice()) << "</td></tr>\n";
+            file << "<div class=\"work-item\"><span>" << num++ << ". " << service->getName() 
+                 << "</span><span>" << fixed << setprecision(2) << service->getPrice() << " BYN</span></div>\n";
             subtotal += service->getPrice();
         }
     }
     
-    file << "</table>\n";
+    file << "<div class=\"thin-line\"></div>\n";
     
+    // Итоги
     double discount = client->getDiscount();
     double discountAmount = subtotal * discount / 100.0;
     double total = subtotal - discountAmount;
     
-    file << "<p>Подытог: " << formatMoney(subtotal) << "</p>\n";
+    file << "<p>Итого: " << fixed << setprecision(2) << subtotal << " BYN</p>\n";
     if (discount > 0) {
-        file << "<p>Скидка (" << discount << "%): -" << formatMoney(discountAmount) << "</p>\n";
+        file << "<p>Скидка постоянного клиента (" << fixed << setprecision(0) 
+             << discount << "%): -" << fixed << setprecision(2) << discountAmount << " BYN</p>\n";
     }
-    file << "<p class=\"total\">ИТОГО К ОПЛАТЕ: " << formatMoney(total) << "</p>\n";
+    file << "<div class=\"thin-line\"></div>\n";
+    file << "<p class=\"total\">ИТОГО К ОПЛАТЕ: " << fixed << setprecision(2) << total << " BYN</p>\n";
+    file << "<div class=\"thin-line\"></div>\n";
     
+    // Исполнитель
     if (employee) {
-        file << "<p>Исполнитель: " << employee->getName() << "</p>\n";
+        string fullName = employee->getName();
+        string shortName = fullName;
+        size_t space1 = fullName.find(' ');
+        if (space1 != string::npos) {
+            string surname = fullName.substr(0, space1);
+            string rest = fullName.substr(space1 + 1);
+            size_t space2 = rest.find(' ');
+            if (space2 != string::npos) {
+                shortName = surname + " " + rest[0] + "." + rest[space2 + 1] + ".";
+            } else if (rest.length() > 0) {
+                shortName = surname + " " + rest[0] + ".";
+            }
+        }
+        file << "<p>Исполнитель: " << shortName << "</p>\n";
     }
     
-    file << "<p>Дата: " << getCurrentDate() << "</p>\n";
+    file << "<p>Дата выдачи: " << getCurrentDate() << "</p>\n";
+    file << "<p>Подпись клиента: _______________</p>\n";
     
     file << "</body>\n</html>\n";
     file.close();
@@ -408,64 +455,102 @@ bool ReportGenerator::saveReceiptToHtml(int orderId, const std::string& filename
     return true;
 }
 
-// Сохранение отчёта по выручке в HTML
-bool ReportGenerator::saveRevenueReportToHtml(const std::string& startDate,
-                                               const std::string& endDate,
-                                               const std::string& filename) {
-    std::ofstream file(filename);
+// ============================================================================
+// HTML: ОТЧЁТ ПО ВЫРУЧКЕ
+// ============================================================================
+bool ReportGenerator::saveRevenueReportToHtml(const string& startDate,
+                                               const string& endDate,
+                                               const string& filename) {
+    ofstream file(filename);
     if (!file.is_open()) return false;
     
-    // Аналогично generateRevenueReport, но в HTML формате
     DataManager& dm = DataManager::getInstance();
-    std::vector<ServiceOrder> allOrders = dm.getOrders();
+    vector<ServiceOrder> allOrders = dm.getOrders();
     
-    int totalOrders = 0, completedOrders = 0;
-    double totalRevenue = 0.0;
+    int totalOrders = 0, completedOrders = 0, inProgressOrders = 0, newOrders = 0;
+    double totalWithoutDiscount = 0.0, totalDiscount = 0.0;
     
     for (const auto& order : allOrders) {
         if (order.getDate() >= startDate && order.getDate() <= endDate) {
             totalOrders++;
-            if (order.getStatus() == OrderStatus::COMPLETED || 
-                order.getStatus() == OrderStatus::ISSUED) {
-                completedOrders++;
-                totalRevenue += order.getTotalCost();
+            switch (order.getStatus()) {
+                case OrderStatus::NEW: newOrders++; break;
+                case OrderStatus::IN_PROGRESS: inProgressOrders++; break;
+                case OrderStatus::COMPLETED:
+                case OrderStatus::ISSUED:
+                    completedOrders++;
+                    {
+                        const Client* client = dm.findClientById(order.getClientId());
+                        double orderTotal = 0.0;
+                        for (int serviceId : order.getServiceIds()) {
+                            const ServiceType* service = dm.findServiceTypeById(serviceId);
+                            if (service) orderTotal += service->getPrice();
+                        }
+                        totalWithoutDiscount += orderTotal;
+                        double discount = client ? client->getDiscount() : 0.0;
+                        totalDiscount += orderTotal * discount / 100.0;
+                    }
+                    break;
             }
         }
     }
     
-    file << "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n";
-    file << "<meta charset=\"UTF-8\">\n<title>Отчёт по выручке</title>\n";
-    file << "<style>body{font-family:Arial;max-width:800px;margin:0 auto;padding:20px;}</style>\n";
-    file << "</head>\n<body>\n";
-    file << "<h1>Отчёт по выручке</h1>\n";
-    file << "<p>Период: " << startDate << " - " << endDate << "</p>\n";
-    file << "<p>Всего заявок: " << totalOrders << "</p>\n";
-    file << "<p>Выполнено: " << completedOrders << "</p>\n";
-    file << "<p><strong>Итого выручка: " << formatMoney(totalRevenue) << "</strong></p>\n";
-    file << "</body>\n</html>\n";
+    double totalRevenue = totalWithoutDiscount - totalDiscount;
     
+    file << "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n";
+    file << "<meta charset=\"windows-1251\">\n";
+    file << "<title>Отчёт по выручке</title>\n";
+    file << "<style>\n";
+    file << "body { font-family: 'Courier New', monospace; max-width: 600px; margin: 20px auto; padding: 20px; }\n";
+    file << ".line { border-top: 2px solid #000; margin: 10px 0; }\n";
+    file << ".thin-line { border-top: 1px dashed #000; margin: 10px 0; }\n";
+    file << ".center { text-align: center; }\n";
+    file << ".header { font-weight: bold; font-size: 16px; }\n";
+    file << ".total { font-weight: bold; }\n";
+    file << "</style>\n</head>\n<body>\n";
+    
+    file << "<div class=\"line\"></div>\n";
+    file << "<div class=\"center header\">ОТЧЁТ ПО ВЫРУЧКЕ ЗА ПЕРИОД</div>\n";
+    file << "<div class=\"line\"></div>\n";
+    
+    file << "<p>Период: с " << startDate << " по " << endDate << "</p>\n";
+    
+    file << "<div class=\"thin-line\"></div>\n";
+    file << "<p>Всего заявок за период: " << totalOrders << "<br>\n";
+    file << "Из них выполнено: " << completedOrders << "<br>\n";
+    file << "В работе: " << inProgressOrders << "<br>\n";
+    file << "Новых: " << newOrders << "</p>\n";
+    file << "<div class=\"thin-line\"></div>\n";
+    
+    file << "<p>Выручка по выполненным заявкам:</p>\n";
+    file << "<p>Сумма без учёта скидок: " << fixed << setprecision(2) << totalWithoutDiscount << " BYN<br>\n";
+    file << "Сумма предоставленных скидок: " << fixed << setprecision(2) << totalDiscount << " BYN</p>\n";
+    file << "<div class=\"thin-line\"></div>\n";
+    file << "<p class=\"total\">ИТОГО ВЫРУЧКА: " << fixed << setprecision(2) << totalRevenue << " BYN</p>\n";
+    file << "<div class=\"thin-line\"></div>\n";
+    
+    if (completedOrders > 0) {
+        file << "<p>Средний чек: " << fixed << setprecision(2) << (totalRevenue / completedOrders) << " BYN</p>\n";
+    }
+    
+    file << "</body>\n</html>\n";
     file.close();
     return true;
 }
 
-// Сохранение статистики в HTML
-bool ReportGenerator::saveStatisticsToHtml(const std::string& startDate,
-                                           const std::string& endDate,
-                                           const std::string& filename) {
-    std::ofstream file(filename);
+// ============================================================================
+// HTML: СТАТИСТИКА ПО ВИДАМ РАБОТ
+// ============================================================================
+bool ReportGenerator::saveStatisticsToHtml(const string& startDate,
+                                           const string& endDate,
+                                           const string& filename) {
+    ofstream file(filename);
     if (!file.is_open()) return false;
     
-    file << "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n";
-    file << "<meta charset=\"UTF-8\">\n<title>Статистика по видам работ</title>\n";
-    file << "<style>body{font-family:Arial;max-width:800px;margin:0 auto;padding:20px;}";
-    file << "table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;}</style>\n";
-    file << "</head>\n<body>\n";
-    file << "<h1>Статистика по видам работ</h1>\n";
-    file << "<p>Период: " << startDate << " - " << endDate << "</p>\n";
-    
-    // Сбор статистики аналогично generateServiceStatistics
     DataManager& dm = DataManager::getInstance();
-    std::map<int, std::pair<int, double>> stats;
+    map<int, pair<int, double>> stats;
+    double grandTotal = 0.0;
+    int totalCount = 0;
     
     for (const auto& order : dm.getOrders()) {
         if (order.getDate() >= startDate && order.getDate() <= endDate) {
@@ -476,22 +561,64 @@ bool ReportGenerator::saveStatisticsToHtml(const std::string& startDate,
                     if (service) {
                         stats[serviceId].first++;
                         stats[serviceId].second += service->getPrice();
+                        grandTotal += service->getPrice();
+                        totalCount++;
                     }
                 }
             }
         }
     }
     
-    file << "<table>\n<tr><th>Вид работы</th><th>Количество</th><th>Сумма</th></tr>\n";
+    // Сортировка
+    vector<tuple<int, string, int, double>> sortedStats;
     for (const auto& stat : stats) {
         const ServiceType* service = dm.findServiceTypeById(stat.first);
         if (service) {
-            file << "<tr><td>" << service->getName() << "</td><td>" << stat.second.first
-                 << "</td><td>" << formatMoney(stat.second.second) << "</td></tr>\n";
+            sortedStats.push_back({stat.first, service->getName(), stat.second.first, stat.second.second});
         }
     }
-    file << "</table>\n</body>\n</html>\n";
+    sort(sortedStats.begin(), sortedStats.end(),
+        [](const auto& a, const auto& b) { return get<3>(a) > get<3>(b); });
     
+    file << "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n";
+    file << "<meta charset=\"windows-1251\">\n";
+    file << "<title>Статистика по видам работ</title>\n";
+    file << "<style>\n";
+    file << "body { font-family: 'Courier New', monospace; max-width: 700px; margin: 20px auto; padding: 20px; }\n";
+    file << ".line { border-top: 2px solid #000; margin: 10px 0; }\n";
+    file << ".thin-line { border-top: 1px dashed #000; margin: 10px 0; }\n";
+    file << ".center { text-align: center; }\n";
+    file << ".header { font-weight: bold; font-size: 16px; }\n";
+    file << "table { width: 100%; border-collapse: collapse; margin: 10px 0; }\n";
+    file << "th, td { padding: 5px; text-align: left; border-bottom: 1px solid #ddd; }\n";
+    file << "th { background-color: #f0f0f0; }\n";
+    file << ".num { text-align: right; }\n";
+    file << ".total-row { font-weight: bold; }\n";
+    file << "</style>\n</head>\n<body>\n";
+    
+    file << "<div class=\"line\"></div>\n";
+    file << "<div class=\"center header\">СТАТИСТИКА ПО ВИДАМ РАБОТ</div>\n";
+    file << "<div class=\"center\">Период: c " << startDate << " по " << endDate << "</div>\n";
+    file << "<div class=\"line\"></div>\n";
+    
+    file << "<table>\n";
+    file << "<tr><th>№</th><th>Вид работы</th><th class=\"num\">Кол-во</th><th class=\"num\">Сумма</th><th class=\"num\">Доля, %</th></tr>\n";
+    
+    int num = 1;
+    for (const auto& item : sortedStats) {
+        double percent = grandTotal > 0 ? (get<3>(item) / grandTotal) * 100.0 : 0.0;
+        file << "<tr><td>" << num++ << "</td><td>" << get<1>(item) 
+             << "</td><td class=\"num\">" << get<2>(item) 
+             << "</td><td class=\"num\">" << fixed << setprecision(2) << get<3>(item)
+             << "</td><td class=\"num\">" << fixed << setprecision(1) << percent << "%</td></tr>\n";
+    }
+    
+    file << "<tr class=\"total-row\"><td></td><td>ИТОГО:</td><td class=\"num\">" << totalCount
+         << "</td><td class=\"num\">" << fixed << setprecision(2) << grandTotal
+         << "</td><td class=\"num\">100.0%</td></tr>\n";
+    file << "</table>\n";
+    
+    file << "</body>\n</html>\n";
     file.close();
     return true;
 }

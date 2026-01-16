@@ -93,12 +93,12 @@ void DataManager::loadAll() {
         mkdir(dataPath.c_str(), 0777);
     #endif
 
-    std::string line;
+    string line;
     
     // Загрузка пользователей
-    std::ifstream usersIn(usersFile);
+    ifstream usersIn(usersFile);
     if (usersIn.is_open()) {
-        while (std::getline(usersIn, line)) {
+        while (getline(usersIn, line)) {
             if (!line.empty()) {
                 users.push_back(User::deserialize(line));
             }
@@ -107,9 +107,9 @@ void DataManager::loadAll() {
     }
     
     // Загрузка клиентов
-    std::ifstream clientsIn(clientsFile);
+    ifstream clientsIn(clientsFile);
     if (clientsIn.is_open()) {
-        while (std::getline(clientsIn, line)) {
+        while (getline(clientsIn, line)) {
             if (!line.empty()) {
                 clients.push_back(Client::deserialize(line));
             }
@@ -118,9 +118,9 @@ void DataManager::loadAll() {
     }
     
     // Загрузка сотрудников
-    std::ifstream employeesIn(employeesFile);
+    ifstream employeesIn(employeesFile);
     if (employeesIn.is_open()) {
-        while (std::getline(employeesIn, line)) {
+        while (getline(employeesIn, line)) {
             if (!line.empty()) {
                 employees.push_back(Employee::deserialize(line));
             }
@@ -129,9 +129,9 @@ void DataManager::loadAll() {
     }
     
     // Загрузка автомобилей
-    std::ifstream carsIn(carsFile);
+    ifstream carsIn(carsFile);
     if (carsIn.is_open()) {
-        while (std::getline(carsIn, line)) {
+        while (getline(carsIn, line)) {
             if (!line.empty()) {
                 cars.push_back(Car::deserialize(line));
             }
@@ -140,9 +140,9 @@ void DataManager::loadAll() {
     }
     
     // Загрузка видов работ
-    std::ifstream servicesIn(servicesFile);
+    ifstream servicesIn(servicesFile);
     if (servicesIn.is_open()) {
-        while (std::getline(servicesIn, line)) {
+        while (getline(servicesIn, line)) {
             if (!line.empty()) {
                 serviceTypes.push_back(ServiceType::deserialize(line));
             }
@@ -151,9 +151,9 @@ void DataManager::loadAll() {
     }
     
     // Загрузка заявок
-    std::ifstream ordersIn(ordersFile);
+    ifstream ordersIn(ordersFile);
     if (ordersIn.is_open()) {
-        while (std::getline(ordersIn, line)) {
+        while (getline(ordersIn, line)) {
             if (!line.empty()) {
                 orders.push_back(ServiceOrder::deserialize(line));
             }
@@ -171,7 +171,7 @@ void DataManager::loadAll() {
 // Сохранение всех данных
 void DataManager::saveAll() {
     // Сохранение пользователей
-    std::ofstream usersOut(usersFile);
+    ofstream usersOut(usersFile);
     if (usersOut.is_open()) {
         for (const auto& u : users) {
             usersOut << u.serialize() << "\n";
@@ -180,7 +180,7 @@ void DataManager::saveAll() {
     }
     
     // Сохранение клиентов
-    std::ofstream clientsOut(clientsFile);
+    ofstream clientsOut(clientsFile);
     if (clientsOut.is_open()) {
         for (const auto& c : clients) {
             clientsOut << c.serialize() << "\n";
@@ -189,7 +189,7 @@ void DataManager::saveAll() {
     }
     
     // Сохранение сотрудников
-    std::ofstream employeesOut(employeesFile);
+    ofstream employeesOut(employeesFile);
     if (employeesOut.is_open()) {
         for (const auto& e : employees) {
             employeesOut << e.serialize() << "\n";
@@ -198,7 +198,7 @@ void DataManager::saveAll() {
     }
     
     // Сохранение автомобилей
-    std::ofstream carsOut(carsFile);
+    ofstream carsOut(carsFile);
     if (carsOut.is_open()) {
         for (const auto& c : cars) {
             carsOut << c.serialize() << "\n";
@@ -207,7 +207,7 @@ void DataManager::saveAll() {
     }
     
     // Сохранение видов работ
-    std::ofstream servicesOut(servicesFile);
+    ofstream servicesOut(servicesFile);
     if (servicesOut.is_open()) {
         for (const auto& s : serviceTypes) {
             servicesOut << s.serialize() << "\n";
@@ -216,7 +216,7 @@ void DataManager::saveAll() {
     }
     
     // Сохранение заявок
-    std::ofstream ordersOut(ordersFile);
+    ofstream ordersOut(ordersFile);
     if (ordersOut.is_open()) {
         for (const auto& o : orders) {
             ordersOut << o.serialize() << "\n";
@@ -227,7 +227,7 @@ void DataManager::saveAll() {
 
 // === МЕТОДЫ ДЛЯ РАБОТЫ С КЛИЕНТАМИ ===
 
-std::vector<Client>& DataManager::getClients() {
+vector<Client>& DataManager::getClients() {
     return clients;
 }
 
@@ -255,7 +255,7 @@ bool DataManager::updateClient(int id, const Client& client) {
 }
 
 bool DataManager::deleteClient(int id) {
-    auto it = std::remove_if(clients.begin(), clients.end(),
+    auto it = remove_if(clients.begin(), clients.end(),
         [id](const Client& c) { return c.getId() == id; });
     if (it != clients.end()) {
         clients.erase(it, clients.end());
@@ -264,15 +264,15 @@ bool DataManager::deleteClient(int id) {
     return false;
 }
 
-std::vector<Client> DataManager::searchClientsByName(const std::string& name) const {
-    std::vector<Client> result;
-    std::string lowerName = name;
-    std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
+vector<Client> DataManager::searchClientsByName(const string& name) const {
+    vector<Client> result;
+    string lowerName = name;
+    transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
     
     for (const auto& c : clients) {
-        std::string clientName = c.getName();
-        std::transform(clientName.begin(), clientName.end(), clientName.begin(), ::tolower);
-        if (clientName.find(lowerName) != std::string::npos) {
+        string clientName = c.getName();
+        transform(clientName.begin(), clientName.end(), clientName.begin(), ::tolower);
+        if (clientName.find(lowerName) != string::npos) {
             result.push_back(c);
         }
     }
@@ -281,7 +281,7 @@ std::vector<Client> DataManager::searchClientsByName(const std::string& name) co
 
 // === МЕТОДЫ ДЛЯ РАБОТЫ С СОТРУДНИКАМИ ===
 
-std::vector<Employee>& DataManager::getEmployees() {
+vector<Employee>& DataManager::getEmployees() {
     return employees;
 }
 
@@ -309,7 +309,7 @@ bool DataManager::updateEmployee(int id, const Employee& employee) {
 }
 
 bool DataManager::deleteEmployee(int id) {
-    auto it = std::remove_if(employees.begin(), employees.end(),
+    auto it = remove_if(employees.begin(), employees.end(),
         [id](const Employee& e) { return e.getId() == id; });
     if (it != employees.end()) {
         employees.erase(it, employees.end());
@@ -320,7 +320,7 @@ bool DataManager::deleteEmployee(int id) {
 
 // === МЕТОДЫ ДЛЯ РАБОТЫ С ПОЛЬЗОВАТЕЛЯМИ ===
 
-std::vector<User>& DataManager::getUsers() {
+vector<User>& DataManager::getUsers() {
     return users;
 }
 
@@ -333,7 +333,7 @@ const User* DataManager::findUserById(int id) const {
     return nullptr;
 }
 
-const User* DataManager::findUserByLogin(const std::string& login) const {
+const User* DataManager::findUserByLogin(const string& login) const {
     for (const auto& u : users) {
         if (u.getLogin() == login) {
             return &u;
@@ -357,7 +357,7 @@ bool DataManager::updateUser(int id, const User& user) {
 }
 
 bool DataManager::deleteUser(int id) {
-    auto it = std::remove_if(users.begin(), users.end(),
+    auto it = remove_if(users.begin(), users.end(),
         [id](const User& u) { return u.getId() == id; });
     if (it != users.end()) {
         users.erase(it, users.end());
@@ -368,7 +368,7 @@ bool DataManager::deleteUser(int id) {
 
 // === МЕТОДЫ ДЛЯ РАБОТЫ С АВТОМОБИЛЯМИ ===
 
-std::vector<Car>& DataManager::getCars() {
+vector<Car>& DataManager::getCars() {
     return cars;
 }
 
@@ -381,8 +381,8 @@ const Car* DataManager::findCarById(int id) const {
     return nullptr;
 }
 
-std::vector<Car> DataManager::getCarsByClientId(int clientId) const {
-    std::vector<Car> result;
+vector<Car> DataManager::getCarsByClientId(int clientId) const {
+    vector<Car> result;
     for (const auto& c : cars) {
         if (c.getClientId() == clientId) {
             result.push_back(c);
@@ -406,7 +406,7 @@ bool DataManager::updateCar(int id, const Car& car) {
 }
 
 bool DataManager::deleteCar(int id) {
-    auto it = std::remove_if(cars.begin(), cars.end(),
+    auto it = remove_if(cars.begin(), cars.end(),
         [id](const Car& c) { return c.getId() == id; });
     if (it != cars.end()) {
         cars.erase(it, cars.end());
@@ -417,7 +417,7 @@ bool DataManager::deleteCar(int id) {
 
 // === МЕТОДЫ ДЛЯ РАБОТЫ С ВИДАМИ РАБОТ ===
 
-std::vector<ServiceType>& DataManager::getServiceTypes() {
+vector<ServiceType>& DataManager::getServiceTypes() {
     return serviceTypes;
 }
 
@@ -445,7 +445,7 @@ bool DataManager::updateServiceType(int id, const ServiceType& serviceType) {
 }
 
 bool DataManager::deleteServiceType(int id) {
-    auto it = std::remove_if(serviceTypes.begin(), serviceTypes.end(),
+    auto it = remove_if(serviceTypes.begin(), serviceTypes.end(),
         [id](const ServiceType& s) { return s.getId() == id; });
     if (it != serviceTypes.end()) {
         serviceTypes.erase(it, serviceTypes.end());
@@ -456,7 +456,7 @@ bool DataManager::deleteServiceType(int id) {
 
 // === МЕТОДЫ ДЛЯ РАБОТЫ С ЗАЯВКАМИ ===
 
-std::vector<ServiceOrder>& DataManager::getOrders() {
+vector<ServiceOrder>& DataManager::getOrders() {
     return orders;
 }
 
@@ -469,8 +469,8 @@ const ServiceOrder* DataManager::findOrderById(int id) const {
     return nullptr;
 }
 
-std::vector<ServiceOrder> DataManager::getOrdersByClientId(int clientId) const {
-    std::vector<ServiceOrder> result;
+vector<ServiceOrder> DataManager::getOrdersByClientId(int clientId) const {
+    vector<ServiceOrder> result;
     for (const auto& o : orders) {
         if (o.getClientId() == clientId) {
             result.push_back(o);
@@ -479,8 +479,8 @@ std::vector<ServiceOrder> DataManager::getOrdersByClientId(int clientId) const {
     return result;
 }
 
-std::vector<ServiceOrder> DataManager::getOrdersByStatus(OrderStatus status) const {
-    std::vector<ServiceOrder> result;
+vector<ServiceOrder> DataManager::getOrdersByStatus(OrderStatus status) const {
+    vector<ServiceOrder> result;
     for (const auto& o : orders) {
         if (o.getStatus() == status) {
             result.push_back(o);
@@ -489,8 +489,8 @@ std::vector<ServiceOrder> DataManager::getOrdersByStatus(OrderStatus status) con
     return result;
 }
 
-std::vector<ServiceOrder> DataManager::getOrdersByDate(const std::string& date) const {
-    std::vector<ServiceOrder> result;
+vector<ServiceOrder> DataManager::getOrdersByDate(const string& date) const {
+    vector<ServiceOrder> result;
     for (const auto& o : orders) {
         if (o.getDate() == date) {
             result.push_back(o);
@@ -499,9 +499,9 @@ std::vector<ServiceOrder> DataManager::getOrdersByDate(const std::string& date) 
     return result;
 }
 
-std::vector<ServiceOrder> DataManager::getOrdersByDateRange(const std::string& startDate,
-                                                             const std::string& endDate) const {
-    std::vector<ServiceOrder> result;
+vector<ServiceOrder> DataManager::getOrdersByDateRange(const string& startDate,
+                                                             const string& endDate) const {
+    vector<ServiceOrder> result;
     for (const auto& o : orders) {
         if (o.getDate() >= startDate && o.getDate() <= endDate) {
             result.push_back(o);
@@ -525,7 +525,7 @@ bool DataManager::updateOrder(int id, const ServiceOrder& order) {
 }
 
 bool DataManager::deleteOrder(int id) {
-    auto it = std::remove_if(orders.begin(), orders.end(),
+    auto it = remove_if(orders.begin(), orders.end(),
         [id](const ServiceOrder& o) { return o.getId() == id; });
     if (it != orders.end()) {
         orders.erase(it, orders.end());
@@ -535,7 +535,7 @@ bool DataManager::deleteOrder(int id) {
 }
 
 // Расчёт стоимости заявки
-double DataManager::calculateOrderCost(const std::vector<int>& serviceIds, double discount) const {
+double DataManager::calculateOrderCost(const vector<int>& serviceIds, double discount) const {
     double total = 0.0;
     for (int id : serviceIds) {
         const ServiceType* service = findServiceTypeById(id);

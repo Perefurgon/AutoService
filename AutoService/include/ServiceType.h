@@ -3,6 +3,8 @@
 
 #include <string>
 
+using namespace std;
+
 /**
  * Класс ServiceType
  * Представляет вид работы (услугу) автосервиса
@@ -10,7 +12,7 @@
 class ServiceType {
 private:
     int id;
-    std::string name;   // Наименование услуги
+    string name;   // Наименование услуги
     double price;       // Базовая стоимость
     static int nextId;
 
@@ -19,7 +21,7 @@ public:
     ServiceType();
     
     // Параметризованный конструктор
-    ServiceType(int id, const std::string& name, double price);
+    ServiceType(int id, const string& name, double price);
     
     // Конструктор копирования
     ServiceType(const ServiceType& other);
@@ -32,21 +34,21 @@ public:
     
     // Геттеры
     int getId() const;
-    std::string getName() const;
+    string getName() const;
     double getPrice() const;
     
     // Сеттеры
-    void setName(const std::string& name);
+    void setName(const string& name);
     void setPrice(double price);
     
     // Получение информации
-    std::string getInfo() const;
+    string getInfo() const;
     
     // Сериализация
-    std::string serialize() const;
+    string serialize() const;
     
     // Статический метод десериализации
-    static ServiceType deserialize(const std::string& data);
+    static ServiceType deserialize(const string& data);
     
     // Статический метод для получения следующего ID
     static int getNextId();

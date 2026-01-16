@@ -6,7 +6,7 @@
 Client::Client() : Person(), discount(0.0) {}
 
 // Параметризованный конструктор
-Client::Client(int id, const std::string& name, const std::string& phone, double discount)
+Client::Client(int id, const string& name, const string& phone, double discount)
     : Person(id, name, phone), discount(0.0) {
     setDiscount(discount);  // Используем сеттер для валидации
 }
@@ -40,40 +40,40 @@ void Client::setDiscount(double discount) {
 }
 
 // Переопределение виртуального метода getInfo()
-std::string Client::getInfo() const {
-    std::ostringstream oss;
+string Client::getInfo() const {
+    ostringstream oss;
     oss << "Клиент: " << name << ", Тел: " << phone;
     if (discount > 0) {
-        oss << ", Скидка: " << std::fixed << std::setprecision(1) << discount << "%";
+        oss << ", Скидка: " << fixed << setprecision(1) << discount << "%";
     }
     return oss.str();
 }
 
 // Сериализация в строку
-std::string Client::serialize() const {
-    std::ostringstream oss;
+string Client::serialize() const {
+    ostringstream oss;
     oss << id << ";" << name << ";" << phone << ";" 
-        << std::fixed << std::setprecision(1) << discount;
+        << fixed << setprecision(1) << discount;
     return oss.str();
 }
 
 // Статический метод десериализации
-Client Client::deserialize(const std::string& data) {
-    std::istringstream iss(data);
-    std::string token;
+Client Client::deserialize(const string& data) {
+    istringstream iss(data);
+    string token;
     
     int id;
-    std::string name, phone;
+    string name, phone;
     double discount;
     
-    std::getline(iss, token, ';');
-    id = std::stoi(token);
+    getline(iss, token, ';');
+    id = stoi(token);
     
-    std::getline(iss, name, ';');
-    std::getline(iss, phone, ';');
+    getline(iss, name, ';');
+    getline(iss, phone, ';');
     
-    std::getline(iss, token, ';');
-    discount = std::stod(token);
+    getline(iss, token, ';');
+    discount = stod(token);
     
     return Client(id, name, phone, discount);
 }

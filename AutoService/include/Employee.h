@@ -3,21 +3,23 @@
 
 #include "Person.h"
 
+using namespace std;
+
 /**
  * Класс Employee - наследник Person
  * Представляет сотрудника автосервиса (мастера)
  */
 class Employee : public Person {
 private:
-    std::string position;  // Должность
+    string position;  // Должность
 
 public:
     // Конструктор по умолчанию
     Employee();
     
     // Параметризованный конструктор
-    Employee(int id, const std::string& name, const std::string& phone, 
-             const std::string& position);
+    Employee(int id, const string& name, const string& phone, 
+             const string& position);
     
     // Конструктор копирования
     Employee(const Employee& other);
@@ -29,19 +31,19 @@ public:
     ~Employee() override;
     
     // Геттер для должности
-    std::string getPosition() const;
+    string getPosition() const;
     
     // Сеттер для должности
-    void setPosition(const std::string& position);
+    void setPosition(const string& position);
     
     // Переопределение виртуального метода (полиморфизм)
-    std::string getInfo() const override;
+    string getInfo() const override;
     
     // Переопределение метода сериализации
-    std::string serialize() const override;
+    string serialize() const override;
     
     // Статический метод десериализации
-    static Employee deserialize(const std::string& data);
+    static Employee deserialize(const string& data);
 };
 
 #endif // EMPLOYEE_H

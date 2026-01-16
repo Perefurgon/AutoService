@@ -5,8 +5,8 @@
 Employee::Employee() : Person(), position("") {}
 
 // Параметризованный конструктор
-Employee::Employee(int id, const std::string& name, const std::string& phone,
-                   const std::string& position)
+Employee::Employee(int id, const string& name, const string& phone,
+                   const string& position)
     : Person(id, name, phone), position(position) {}
 
 // Конструктор копирования
@@ -26,43 +26,43 @@ Employee& Employee::operator=(const Employee& other) {
 Employee::~Employee() {}
 
 // Геттер для должности
-std::string Employee::getPosition() const {
+string Employee::getPosition() const {
     return position;
 }
 
 // Сеттер для должности
-void Employee::setPosition(const std::string& position) {
+void Employee::setPosition(const string& position) {
     this->position = position;
 }
 
 // Переопределение виртуального метода getInfo()
-std::string Employee::getInfo() const {
-    std::ostringstream oss;
+string Employee::getInfo() const {
+    ostringstream oss;
     oss << "Сотрудник: " << name << ", Должность: " << position << ", Тел: " << phone;
     return oss.str();
 }
 
 // Сериализация в строку
-std::string Employee::serialize() const {
-    std::ostringstream oss;
+string Employee::serialize() const {
+    ostringstream oss;
     oss << id << ";" << name << ";" << phone << ";" << position;
     return oss.str();
 }
 
 // Статический метод десериализации
-Employee Employee::deserialize(const std::string& data) {
-    std::istringstream iss(data);
-    std::string token;
+Employee Employee::deserialize(const string& data) {
+    istringstream iss(data);
+    string token;
     
     int id;
-    std::string name, phone, position;
+    string name, phone, position;
     
-    std::getline(iss, token, ';');
-    id = std::stoi(token);
+    getline(iss, token, ';');
+    id = stoi(token);
     
-    std::getline(iss, name, ';');
-    std::getline(iss, phone, ';');
-    std::getline(iss, position, ';');
+    getline(iss, name, ';');
+    getline(iss, phone, ';');
+    getline(iss, position, ';');
     
     return Employee(id, name, phone, position);
 }

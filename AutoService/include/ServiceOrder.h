@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 /**
  * Класс ServiceOrder
  * Представляет заявку на обслуживание автомобиля
@@ -15,9 +17,9 @@ private:
     int clientId;           // ID клиента
     int carId;              // ID автомобиля
     int employeeId;         // ID исполнителя (мастера)
-    std::string date;       // Дата приёма (формат: ДД.ММ.ГГГГ)
+    string date;       // Дата приёма (формат: ДД.ММ.ГГГГ)
     OrderStatus status;     // Статус заявки
-    std::vector<int> serviceIds;  // Список ID услуг
+    vector<int> serviceIds;  // Список ID услуг
     double totalCost;       // Итоговая стоимость
     static int nextId;
 
@@ -27,8 +29,8 @@ public:
     
     // Параметризованный конструктор
     ServiceOrder(int id, int clientId, int carId, int employeeId,
-                 const std::string& date, OrderStatus status,
-                 const std::vector<int>& serviceIds, double totalCost);
+                 const string& date, OrderStatus status,
+                 const vector<int>& serviceIds, double totalCost);
     
     // Конструктор копирования
     ServiceOrder(const ServiceOrder& other);
@@ -44,17 +46,17 @@ public:
     int getClientId() const;
     int getCarId() const;
     int getEmployeeId() const;
-    std::string getDate() const;
+    string getDate() const;
     OrderStatus getStatus() const;
-    std::string getStatusString() const;
-    std::vector<int> getServiceIds() const;
+    string getStatusString() const;
+    vector<int> getServiceIds() const;
     double getTotalCost() const;
     
     // Сеттеры
     void setClientId(int clientId);
     void setCarId(int carId);
     void setEmployeeId(int employeeId);
-    void setDate(const std::string& date);
+    void setDate(const string& date);
     void setStatus(OrderStatus status);
     void setTotalCost(double cost);
     
@@ -65,19 +67,19 @@ public:
     bool hasService(int serviceId) const;
     
     // Получение информации
-    std::string getInfo() const;
+    string getInfo() const;
     
     // Сериализация
-    std::string serialize() const;
+    string serialize() const;
     
     // Статический метод десериализации
-    static ServiceOrder deserialize(const std::string& data);
+    static ServiceOrder deserialize(const string& data);
     
     // Преобразование статуса в строку
-    static std::string statusToString(OrderStatus status);
+    static string statusToString(OrderStatus status);
     
     // Преобразование строки в статус
-    static OrderStatus stringToStatus(const std::string& statusStr);
+    static OrderStatus stringToStatus(const string& statusStr);
     
     // Статический метод для получения следующего ID
     static int getNextId();

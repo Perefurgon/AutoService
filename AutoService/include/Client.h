@@ -3,6 +3,8 @@
 
 #include "Person.h"
 
+using namespace std;
+
 /**
  * Класс Client - наследник Person
  * Представляет клиента автосервиса
@@ -17,7 +19,7 @@ public:
     Client();
     
     // Параметризованный конструктор
-    Client(int id, const std::string& name, const std::string& phone, double discount = 0.0);
+    Client(int id, const string& name, const string& phone, double discount = 0.0);
     
     // Конструктор копирования
     Client(const Client& other);
@@ -35,13 +37,13 @@ public:
     void setDiscount(double discount);
     
     // Переопределение виртуального метода (полиморфизм)
-    std::string getInfo() const override;
+    string getInfo() const override;
     
     // Переопределение метода сериализации
-    std::string serialize() const override;
+    string serialize() const override;
     
     // Статический метод десериализации
-    static Client deserialize(const std::string& data);
+    static Client deserialize(const string& data);
 };
 
 #endif // CLIENT_H

@@ -4,6 +4,8 @@
 #include <string>
 #include <sstream>
 
+using namespace std;
+
 // Перечисление ролей пользователей
 enum class UserRole {
     ROLE_ADMIN,
@@ -25,8 +27,8 @@ enum class OrderStatus {
 class Person {
 protected:
     int id;
-    std::string name;
-    std::string phone;
+    string name;
+    string phone;
     static int nextId;  // Статическое поле для генерации ID
 
 public:
@@ -34,7 +36,7 @@ public:
     Person();
     
     // Параметризованный конструктор
-    Person(int id, const std::string& name, const std::string& phone);
+    Person(int id, const string& name, const string& phone);
     
     // Конструктор копирования
     Person(const Person& other);
@@ -47,18 +49,18 @@ public:
     
     // Геттеры (константные методы)
     int getId() const;
-    std::string getName() const;
-    std::string getPhone() const;
+    string getName() const;
+    string getPhone() const;
     
     // Сеттеры
-    void setName(const std::string& name);
-    void setPhone(const std::string& phone);
+    void setName(const string& name);
+    void setPhone(const string& phone);
     
     // Чисто виртуальный метод - делает класс абстрактным
-    virtual std::string getInfo() const = 0;
+    virtual string getInfo() const = 0;
     
     // Виртуальный метод сериализации
-    virtual std::string serialize() const;
+    virtual string serialize() const;
     
     // Статический метод для получения следующего ID
     static int getNextId();

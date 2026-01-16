@@ -5,6 +5,8 @@
 #include <string>
 #include <map>
 
+using namespace std;
+
 /**
  * Класс ReportGenerator
  * Формирует отчёты системы
@@ -12,38 +14,38 @@
 class ReportGenerator {
 public:
     // Формирование квитанции для заявки
-    static std::string generateReceipt(int orderId);
+    static string generateReceipt(int orderId);
     
     // Формирование отчёта по выручке за период
-    static std::string generateRevenueReport(const std::string& startDate, 
-                                             const std::string& endDate);
+    static string generateRevenueReport(const string& startDate, 
+                                             const string& endDate);
     
     // Формирование статистики по видам работ
-    static std::string generateServiceStatistics(const std::string& startDate,
-                                                  const std::string& endDate);
+    static string generateServiceStatistics(const string& startDate,
+                                                  const string& endDate);
     
     // Сохранение отчёта в HTML-файл
-    static bool saveReceiptToHtml(int orderId, const std::string& filename);
+    static bool saveReceiptToHtml(int orderId, const string& filename);
     
     // Сохранение отчёта по выручке в HTML
-    static bool saveRevenueReportToHtml(const std::string& startDate,
-                                        const std::string& endDate,
-                                        const std::string& filename);
+    static bool saveRevenueReportToHtml(const string& startDate,
+                                        const string& endDate,
+                                        const string& filename);
     
     // Сохранение статистики в HTML
-    static bool saveStatisticsToHtml(const std::string& startDate,
-                                     const std::string& endDate,
-                                     const std::string& filename);
+    static bool saveStatisticsToHtml(const string& startDate,
+                                     const string& endDate,
+                                     const string& filename);
 
 private:
     // Вспомогательный метод для создания разделительной линии
-    static std::string createLine(int length, char ch = '-');
+    static string createLine(int length, char ch = '-');
     
     // Форматирование денежной суммы
-    static std::string formatMoney(double amount);
+    static string formatMoney(double amount);
     
     // Получение текущей даты
-    static std::string getCurrentDate();
+    static string getCurrentDate();
 };
 
 #endif // REPORT_GENERATOR_H

@@ -10,6 +10,8 @@
 #include <vector>
 #include <string>
 
+using namespace std;
+
 /**
  * Êëàññ DataManager
  * Óïğàâëÿåò çàãğóçêîé è ñîõğàíåíèåì äàííûõ â ôàéëû
@@ -18,21 +20,21 @@
 class DataManager {
 private:
     // Ïóòè ê ôàéëàì äàííûõ
-    std::string dataPath;
-    std::string clientsFile;
-    std::string employeesFile;
-    std::string usersFile;
-    std::string carsFile;
-    std::string servicesFile;
-    std::string ordersFile;
+    string dataPath;
+    string clientsFile;
+    string employeesFile;
+    string usersFile;
+    string carsFile;
+    string servicesFile;
+    string ordersFile;
     
     // Êîëëåêöèè äàííûõ
-    std::vector<Client> clients;
-    std::vector<Employee> employees;
-    std::vector<User> users;
-    std::vector<Car> cars;
-    std::vector<ServiceType> serviceTypes;
-    std::vector<ServiceOrder> orders;
+    vector<Client> clients;
+    vector<Employee> employees;
+    vector<User> users;
+    vector<Car> cars;
+    vector<ServiceType> serviceTypes;
+    vector<ServiceOrder> orders;
     
     // Ïğèâàòíûé êîíñòğóêòîğ (Singleton)
     DataManager();
@@ -58,57 +60,57 @@ public:
     void saveAll();
     
     // === ÌÅÒÎÄÛ ÄËß ĞÀÁÎÒÛ Ñ ÊËÈÅÍÒÀÌÈ ===
-    std::vector<Client>& getClients();
+    vector<Client>& getClients();
     const Client* findClientById(int id) const;
     void addClient(const Client& client);
     bool updateClient(int id, const Client& client);
     bool deleteClient(int id);
-    std::vector<Client> searchClientsByName(const std::string& name) const;
+    vector<Client> searchClientsByName(const string& name) const;
     
     // === ÌÅÒÎÄÛ ÄËß ĞÀÁÎÒÛ Ñ ÑÎÒĞÓÄÍÈÊÀÌÈ ===
-    std::vector<Employee>& getEmployees();
+    vector<Employee>& getEmployees();
     const Employee* findEmployeeById(int id) const;
     void addEmployee(const Employee& employee);
     bool updateEmployee(int id, const Employee& employee);
     bool deleteEmployee(int id);
     
     // === ÌÅÒÎÄÛ ÄËß ĞÀÁÎÒÛ Ñ ÏÎËÜÇÎÂÀÒÅËßÌÈ ===
-    std::vector<User>& getUsers();
+    vector<User>& getUsers();
     const User* findUserById(int id) const;
-    const User* findUserByLogin(const std::string& login) const;
+    const User* findUserByLogin(const string& login) const;
     void addUser(const User& user);
     bool updateUser(int id, const User& user);
     bool deleteUser(int id);
     
     // === ÌÅÒÎÄÛ ÄËß ĞÀÁÎÒÛ Ñ ÀÂÒÎÌÎÁÈËßÌÈ ===
-    std::vector<Car>& getCars();
+    vector<Car>& getCars();
     const Car* findCarById(int id) const;
-    std::vector<Car> getCarsByClientId(int clientId) const;
+    vector<Car> getCarsByClientId(int clientId) const;
     void addCar(const Car& car);
     bool updateCar(int id, const Car& car);
     bool deleteCar(int id);
     
     // === ÌÅÒÎÄÛ ÄËß ĞÀÁÎÒÛ Ñ ÂÈÄÀÌÈ ĞÀÁÎÒ ===
-    std::vector<ServiceType>& getServiceTypes();
+    vector<ServiceType>& getServiceTypes();
     const ServiceType* findServiceTypeById(int id) const;
     void addServiceType(const ServiceType& serviceType);
     bool updateServiceType(int id, const ServiceType& serviceType);
     bool deleteServiceType(int id);
     
     // === ÌÅÒÎÄÛ ÄËß ĞÀÁÎÒÛ Ñ ÇÀßÂÊÀÌÈ ===
-    std::vector<ServiceOrder>& getOrders();
+    vector<ServiceOrder>& getOrders();
     const ServiceOrder* findOrderById(int id) const;
-    std::vector<ServiceOrder> getOrdersByClientId(int clientId) const;
-    std::vector<ServiceOrder> getOrdersByStatus(OrderStatus status) const;
-    std::vector<ServiceOrder> getOrdersByDate(const std::string& date) const;
-    std::vector<ServiceOrder> getOrdersByDateRange(const std::string& startDate, 
-                                                    const std::string& endDate) const;
+    vector<ServiceOrder> getOrdersByClientId(int clientId) const;
+    vector<ServiceOrder> getOrdersByStatus(OrderStatus status) const;
+    vector<ServiceOrder> getOrdersByDate(const string& date) const;
+    vector<ServiceOrder> getOrdersByDateRange(const string& startDate, 
+                                                    const string& endDate) const;
     void addOrder(const ServiceOrder& order);
     bool updateOrder(int id, const ServiceOrder& order);
     bool deleteOrder(int id);
     
     // Ğàñ÷¸ò ñòîèìîñòè çàÿâêè
-    double calculateOrderCost(const std::vector<int>& serviceIds, double discount) const;
+    double calculateOrderCost(const vector<int>& serviceIds, double discount) const;
 };
 
 #endif // DATA_MANAGER_H

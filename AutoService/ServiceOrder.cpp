@@ -13,8 +13,8 @@ ServiceOrder::ServiceOrder()
 
 // Параметризованный конструктор
 ServiceOrder::ServiceOrder(int id, int clientId, int carId, int employeeId,
-                           const std::string& date, OrderStatus status,
-                           const std::vector<int>& serviceIds, double totalCost)
+                           const string& date, OrderStatus status,
+                           const vector<int>& serviceIds, double totalCost)
     : id(id), clientId(clientId), carId(carId), employeeId(employeeId),
       date(date), status(status), serviceIds(serviceIds), totalCost(totalCost) {}
 
@@ -47,21 +47,21 @@ int ServiceOrder::getId() const { return id; }
 int ServiceOrder::getClientId() const { return clientId; }
 int ServiceOrder::getCarId() const { return carId; }
 int ServiceOrder::getEmployeeId() const { return employeeId; }
-std::string ServiceOrder::getDate() const { return date; }
+string ServiceOrder::getDate() const { return date; }
 OrderStatus ServiceOrder::getStatus() const { return status; }
 
-std::string ServiceOrder::getStatusString() const {
+string ServiceOrder::getStatusString() const {
     return statusToString(status);
 }
 
-std::vector<int> ServiceOrder::getServiceIds() const { return serviceIds; }
+vector<int> ServiceOrder::getServiceIds() const { return serviceIds; }
 double ServiceOrder::getTotalCost() const { return totalCost; }
 
 // Сеттеры
 void ServiceOrder::setClientId(int clientId) { this->clientId = clientId; }
 void ServiceOrder::setCarId(int carId) { this->carId = carId; }
 void ServiceOrder::setEmployeeId(int employeeId) { this->employeeId = employeeId; }
-void ServiceOrder::setDate(const std::string& date) { this->date = date; }
+void ServiceOrder::setDate(const string& date) { this->date = date; }
 void ServiceOrder::setStatus(OrderStatus status) { this->status = status; }
 void ServiceOrder::setTotalCost(double cost) { 
     if (cost >= 0) {
@@ -77,7 +77,7 @@ void ServiceOrder::addService(int serviceId) {
 }
 
 void ServiceOrder::removeService(int serviceId) {
-    auto it = std::find(serviceIds.begin(), serviceIds.end(), serviceId);
+    auto it = find(serviceIds.begin(), serviceIds.end(), serviceId);
     if (it != serviceIds.end()) {
         serviceIds.erase(it);
     }
@@ -88,21 +88,21 @@ void ServiceOrder::clearServices() {
 }
 
 bool ServiceOrder::hasService(int serviceId) const {
-    return std::find(serviceIds.begin(), serviceIds.end(), serviceId) != serviceIds.end();
+    return find(serviceIds.begin(), serviceIds.end(), serviceId) != serviceIds.end();
 }
 
 // Получение информации
-std::string ServiceOrder::getInfo() const {
-    std::ostringstream oss;
+string ServiceOrder::getInfo() const {
+    ostringstream oss;
     oss << "Заявка #" << id << " от " << date 
         << ", Статус: " << getStatusString()
-        << ", Сумма: " << std::fixed << std::setprecision(2) << totalCost << " BYN";
+        << ", Сумма: " << fixed << setprecision(2) << totalCost << " BYN";
     return oss.str();
 }
 
 // Сериализация
-std::string ServiceOrder::serialize() const {
-    std::ostringstream oss;
+string ServiceOrder::serialize() const {
+    ostringstream oss;
     oss << id << ";" << clientId << ";" << carId << ";" << employeeId << ";"
         << date << ";" << statusToString(status) << ";";
     
@@ -113,47 +113,47 @@ std::string ServiceOrder::serialize() const {
             oss << ",";
         }
     }
-    oss << ";" << std::fixed << std::setprecision(2) << totalCost;
+    oss << ";" << fixed << setprecision(2) << totalCost;
     
     return oss.str();
 }
 
 // Статический метод десериализации
-ServiceOrder ServiceOrder::deserialize(const std::string& data) {
-    std::istringstream iss(data);
-    std::string token;
+ServiceOrder ServiceOrder::deserialize(const string& data) {
+    istringstream iss(data);
+    string token;
     
     int id, clientId, carId, employeeId;
-    std::string date, statusStr, servicesStr;
+    string date, statusStr, servicesStr;
     double totalCost;
-    std::vector<int> serviceIds;
+    vector<int> serviceIds;
     
-    std::getline(iss, token, ';');
-    id = std::stoi(token);
+    getline(iss, token, ';');
+    id = stoi(token);
     
-    std::getline(iss, token, ';');
-    clientId = std::stoi(token);
+    getline(iss, token, ';');
+    clientId = stoi(token);
     
-    std::getline(iss, token, ';');
-    carId = std::stoi(token);
+    getline(iss, token, ';');
+    carId = stoi(token);
     
-    std::getline(iss, token, ';');
-    employeeId = std::stoi(token);
+    getline(iss, token, ';');
+    employeeId = stoi(token);
     
-    std::getline(iss, date, ';');
-    std::getline(iss, statusStr, ';');
-    std::getline(iss, servicesStr, ';');
+    getline(iss, date, ';');
+    getline(iss, statusStr, ';');
+    getline(iss, servicesStr, ';');
     
-    std::getline(iss, token, ';');
-    totalCost = std::stod(token);
+    getline(iss, token, ';');
+    totalCost = stod(token);
     
     // Парсинг списка услуг
     if (!servicesStr.empty()) {
-        std::istringstream servicesStream(servicesStr);
-        std::string serviceId;
-        while (std::getline(servicesStream, serviceId, ',')) {
+        istringstream servicesStream(servicesStr);
+        string serviceId;
+        while (getline(servicesStream, serviceId, ',')) {
             if (!serviceId.empty()) {
-                serviceIds.push_back(std::stoi(serviceId));
+                serviceIds.push_back(stoi(serviceId));
             }
         }
     }
@@ -164,7 +164,7 @@ ServiceOrder ServiceOrder::deserialize(const std::string& data) {
 }
 
 // Преобразование статуса в строку
-std::string ServiceOrder::statusToString(OrderStatus status) {
+string ServiceOrder::statusToString(OrderStatus status) {
     switch (status) {
         case OrderStatus::NEW:
             return "Новая";
@@ -180,7 +180,7 @@ std::string ServiceOrder::statusToString(OrderStatus status) {
 }
 
 // Преобразование строки в статус
-OrderStatus ServiceOrder::stringToStatus(const std::string& statusStr) {
+OrderStatus ServiceOrder::stringToStatus(const string& statusStr) {
     if (statusStr == "Новая" || statusStr == "NEW") {
         return OrderStatus::NEW;
     } else if (statusStr == "В работе" || statusStr == "IN_PROGRESS") {
