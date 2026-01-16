@@ -6,37 +6,37 @@
 using namespace std;
 
 /**
- * Класс Car
- * Представляет автомобиль клиента
+ * РљР»Р°СЃСЃ Car
+ * РџСЂРµРґСЃС‚Р°РІР»СЏРµС‚ Р°РІС‚РѕРјРѕР±РёР»СЊ РєР»РёРµРЅС‚Р°
  */
 class Car {
 private:
     int id;
-    string brand;      // Марка
-    string model;      // Модель
-    int year;               // Год выпуска
-    string regNumber;  // Госномер
-    int clientId;           // ID владельца
+    string brand;      // РњР°СЂРєР°
+    string model;      // РњРѕРґРµР»СЊ
+    int year;          // Р“РѕРґ РІС‹РїСѓСЃРєР°
+    string regNumber;  // Р“РѕСЃРЅРѕРјРµСЂ
+    int clientId;      // ID РІР»Р°РґРµР»СЊС†Р°
     static int nextId;
 
 public:
-    // Конструктор по умолчанию
+    // РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
     Car();
     
-    // Параметризованный конструктор
+    // РџР°СЂР°РјРµС‚СЂРёР·РѕРІР°РЅРЅС‹Р№ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ
     Car(int id, const string& brand, const string& model,
         int year, const string& regNumber, int clientId);
     
-    // Конструктор копирования
+    // РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РєРѕРїРёСЂРѕРІР°РЅРёСЏ
     Car(const Car& other);
     
-    // Оператор присваивания
+    // РћРїРµСЂР°С‚РѕСЂ РїСЂРёСЃРІР°РёРІР°РЅРёСЏ
     Car& operator=(const Car& other);
     
-    // Деструктор
+    // Р”РµСЃС‚СЂСѓРєС‚РѕСЂ
     ~Car();
     
-    // Геттеры
+    // Р“РµС‚С‚РµСЂС‹
     int getId() const;
     string getBrand() const;
     string getModel() const;
@@ -44,29 +44,29 @@ public:
     string getRegNumber() const;
     int getClientId() const;
     
-    // Сеттеры
+    // РЎРµС‚С‚РµСЂС‹
     void setBrand(const string& brand);
     void setModel(const string& model);
     void setYear(int year);
     void setRegNumber(const string& regNumber);
     void setClientId(int clientId);
     
-    // Получение полной информации
+    // РџРѕР»СѓС‡РµРЅРёРµ РїРѕР»РЅРѕР№ РёРЅС„РѕСЂРјР°С†РёРё
     string getInfo() const;
     
-    // Получение краткой информации
+    // РџРѕР»СѓС‡РµРЅРёРµ РєСЂР°С‚РєРѕР№ РёРЅС„РѕСЂРјР°С†РёРё
     string getShortInfo() const;
     
-    // Сериализация
+    // РЎРµСЂРёР°Р»РёР·Р°С†РёСЏ
     string serialize() const;
     
-    // Статический метод десериализации
+    // РЎС‚Р°С‚РёС‡РµСЃРєРёР№ РјРµС‚РѕРґ РґРµСЃРµСЂРёР°Р»РёР·Р°С†РёРё
     static Car deserialize(const string& data);
     
-    // Статический метод для получения следующего ID
+    // РЎС‚Р°С‚РёС‡РµСЃРєРёР№ РјРµС‚РѕРґ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ СЃР»РµРґСѓСЋС‰РµРіРѕ ID
     static int getNextId();
     
-    // Статический метод для установки счётчика ID
+    // РЎС‚Р°С‚РёС‡РµСЃРєРёР№ РјРµС‚РѕРґ РґР»СЏ СѓСЃС‚Р°РЅРѕРІРєРё СЃС‡С‘С‚С‡РёРєР° ID
     static void setNextId(int id);
 };
 
