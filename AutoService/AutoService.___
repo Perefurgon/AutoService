@@ -1,6 +1,6 @@
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
-#define NOMINMAX    // РћС‚РєР»СЋС‡Р°РµС‚ РјР°РєСЂРѕСЃС‹ min/max РёР· windows.h
+#define NOMINMAX    // Отключает макросы min/max из windows.h
 #endif
 
 #include <iostream>
@@ -19,12 +19,12 @@
 #include "../include/DataManager.h"
 #include "../include/ReportGenerator.h"
 
-// РўРµРєСѓС‰РёР№ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ
-int currentUserId = -1;
+// Текущий авторизованный пользователь
+const User* currentUser = nullptr;
 
-// ====================== Р’РЎРџРћРњРћР“РђРўР•Р›Р¬РќР«Р• Р¤РЈРќРљР¦РР ======================
+// ====================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ======================
 
-// РћС‡РёСЃС‚РєР° СЌРєСЂР°РЅР°
+// Очистка экрана
 void clearScreen() {
     #ifdef _WIN32
         system("cls");
@@ -33,24 +33,24 @@ void clearScreen() {
     #endif
 }
 
-// РќР°СЃС‚СЂРѕР№РєР° РєРѕРЅСЃРѕР»Рё РґР»СЏ Windows (РїРѕРґРґРµСЂР¶РєР° UTF-8)
+// Настройка консоли для Windows (поддержка UTF-8)
 void setupConsole() {
     #ifdef _WIN32
         SetConsoleCP(1251);
         SetConsoleOutputCP(1251);
-        // РР»Рё РґР»СЏ UTF-8:
+        // Или для UTF-8:
         //SetConsoleCP(65001);
         //SetConsoleOutputCP(65001);
     #endif
 }
 
-// РџР°СѓР·Р° СЃ РѕР¶РёРґР°РЅРёРµРј РЅР°Р¶Р°С‚РёСЏ Р»СЋР±РѕР№ РєР»Р°РІРёС€Рё
+// Пауза с ожиданием нажатия любой клавиши
 void pause() {
-    printf("\nР”Р»СЏ РїРѕРґРѕР»Р¶РµРЅРёСЏ РЅР°Р¶РјРёС‚Рµ Р»СЋР±СѓСЋ РєР»Р°РІРёС€Сѓ... ");
+    printf("\nДля подолжения нажмите любую клавишу... ");
     int g = _getch();
 }
 
-// Р§С‚РµРЅРёРµ СЃС‚СЂРѕРєРё СЃ РїСЂРёРіР»Р°С€РµРЅРёРµРј
+// Чтение строки с приглашением
 string readLine(const string& prompt) {
     cout << prompt;
     string line;
@@ -58,7 +58,7 @@ string readLine(const string& prompt) {
     return line;
 }
 
-// Р§С‚РµРЅРёРµ С†РµР»РѕРіРѕ С‡РёСЃР»Р° СЃ РІР°Р»РёРґР°С†РёРµР№
+// Чтение целого числа с валидацией
 int readInt(const string& prompt, int minVal = INT_MIN, int maxVal = INT_MAX) {
     while (true) {
         cout << prompt;
@@ -69,11 +69,11 @@ int readInt(const string& prompt, int minVal = INT_MIN, int maxVal = INT_MAX) {
         }
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << "РћС€РёР±РєР° РІРІРѕРґР°! РџРѕРІС‚РѕСЂРёС‚Рµ.\n";
+        cout << "Ошибка ввода! Повторите.\n";
     }
 }
 
-// Р§С‚РµРЅРёРµ С‡РёСЃР»Р° СЃ РїР»Р°РІР°СЋС‰РµР№ С‚РѕС‡РєРѕР№
+// Чтение числа с плавающей точкой
 double readDouble(const string& prompt, double minVal = 0.0) {
     while (true) {
         cout << prompt;
@@ -84,19 +84,19 @@ double readDouble(const string& prompt, double minVal = 0.0) {
         }
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << "РћС€РёР±РєР° РІРІРѕРґР°! РџРѕРІС‚РѕСЂРёС‚Рµ.\n";
+        cout << "Ошибка ввода! Повторите.\n";
     }
 }
 
-// РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ РґРµР№СЃС‚РІРёСЏ
+// Подтверждение действия
 bool confirm(const string& message) {
-    cout << message << " (Р”Р°/РќРµС‚): ";
+    cout << message << " (Да/Нет): ";
     string answer;
     getline(cin, answer);
-    return (answer == "Рґ" || answer == "Р”" || answer == "РґР°" || answer == "Р”Р°" || answer == "Р”Рђ" || answer == "y" || answer == "Y");
+    return (answer == "д" || answer == "Д" || answer == "да" || answer == "Да" || answer == "ДА" || answer == "y" || answer == "Y");
 }
 
-// РџРѕР»СѓС‡РµРЅРёРµ С‚РµРєСѓС‰РµР№ РґР°С‚С‹
+// Получение текущей даты
 string getCurrentDate() {
     time_t now = time(0);
     char buffer[12];
@@ -111,17 +111,14 @@ string getCurrentDate() {
     return string(buffer);
 }
 
-// РћС‚РѕР±СЂР°Р¶РµРЅРёРµ Р·Р°РіРѕР»РѕРІРєР°
+// Отображение заголовка
 void showHeader(const string& title) {
     clearScreen();
     cout << string(60, '=') << "\n";
-    cout << "     РРќР¤РћР РњРђР¦РРћРќРќРћ-РџРћРРЎРљРћР’РђРЇ РЎРРЎРўР•РњРђ \"РђР’РўРћРЎР•Р Р’РРЎ\"\n";
-    if (currentUserId != -1) {
-        const User* currentUser = DataManager::getInstance().findUserById(currentUserId);
-        if (currentUser) {
-            cout << "     РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ: " << currentUser->getName()
-                 << " (" << currentUser->getRoleString() << ")\n";
-        }
+    cout << "     ИНФОРМАЦИОННО-ПОИСКОВАЯ СИСТЕМА \"АВТОСЕРВИС\"\n";
+    if (currentUser) {
+        cout << "     Пользователь: " << currentUser->getName()
+                  << " (" << currentUser->getRoleString() << ")\n";
     }
     cout << string(60, '=') << "\n\n";
     cout << "     " << title << "\n";
@@ -129,15 +126,15 @@ void showHeader(const string& title) {
     cout << string(60, ' ') << "\n";
 }
 
-// ====================== РђР’РўРћР РР—РђР¦РРЇ ======================
+// ====================== АВТОРИЗАЦИЯ ======================
 
-// Р§С‚РµРЅРёРµ РїР°СЂРѕР»СЏ СЃ РјР°СЃРєРёСЂРѕРІРєРѕР№ Р·РІРµР·РґРѕС‡РєР°РјРё
+// Чтение пароля с маскировкой звездочками
 string readPassword(const string& prompt) {
     cout << prompt;
 
     string password;
     char ch;
-    bool showStars = true; // С„Р»Р°Рі РґР»СЏ РїРѕРєР°Р·Р° Р·РІРµР·РґРѕС‡РµРє
+    bool showStars = true; // флаг для показа звездочек
 
     while (true) {
         ch = _getch();
@@ -154,20 +151,20 @@ string readPassword(const string& prompt) {
                 }
             }
         }
-        else if (ch == 3 || ch == 27) { // Ctrl+C РёР»Рё Escape
+        else if (ch == 3 || ch == 27) { // Ctrl+C или Escape
             password.clear();
             cout << endl;
             return password;
         }
-        else if (ch == 9) { // Tab - РїРµСЂРµРєР»СЋС‡РµРЅРёРµ РІРёРґРёРјРѕСЃС‚Рё РїР°СЂРѕР»СЏ
+        else if (ch == 9) { // Tab - переключение видимости пароля
             showStars = !showStars;
-            // РџРµСЂРµСЂРёСЃРѕРІС‹РІР°РµРј СЃС‚СЂРѕРєСѓ
+            // Перерисовываем строку
             cout << "\r" << prompt;
             for (size_t i = 0; i < password.length(); i++) {
                 cout << (showStars ? '*' : password[i]);
             }
         }
-        else if (ch >= 32 && ch <= 126) { // РїРµС‡Р°С‚РЅС‹Рµ СЃРёРјРІРѕР»С‹
+        else if (ch >= 32 && ch <= 126) { // печатные символы
             password.push_back(ch);
             cout << (showStars ? '*' : ch);
         }
@@ -183,58 +180,58 @@ bool login() {
     while (attempts < MAX_ATTEMPTS) {
         clearScreen();
         cout << string(60, '=') << "\n";
-        cout << "       РРќР¤РћР РњРђР¦РРћРќРќРћ-РџРћРРЎРљРћР’РђРЇ РЎРРЎРўР•РњРђ \"РђР’РўРћРЎР•Р Р’РРЎ\"\n";
-        cout << "                   РђРІС‚РѕСЂРёР·Р°С†РёСЏ\n";
+        cout << "       ИНФОРМАЦИОННО-ПОИСКОВАЯ СИСТЕМА \"АВТОСЕРВИС\"\n";
+        cout << "                   Авторизация\n";
         cout << string(60, '=') << "\n\n";
         
         if (attempts > 0) {
-            cout << "  РћСЃС‚Р°Р»РѕСЃСЊ РїРѕРїС‹С‚РѕРє: " << (MAX_ATTEMPTS - attempts) << "\n\n";
+            cout << "  Осталось попыток: " << (MAX_ATTEMPTS - attempts) << "\n\n";
         }
         
-        string login = readLine("  Р›РѕРіРёРЅ: ");
-        string password = readPassword("  РџР°СЂРѕР»СЊ: ");
+        string login = readLine("  Логин: ");
+        string password = readPassword("  Пароль: ");
         
         const User* user = dm.findUserByLogin(login);
         
         if (user == nullptr) {
-            cout << "\n  РћРЁРР‘РљРђ: РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ!\n";
+            cout << "\n  ОШИБКА: Пользователь не найден!\n";
             attempts++;
             pause();
             continue;
         }
         
         if (!user->checkPassword(password)) {
-            cout << "\n  РћРЁРР‘РљРђ: РќРµРІРµСЂРЅС‹Р№ РїР°СЂРѕР»СЊ!\n";
+            cout << "\n  ОШИБКА: Неверный пароль!\n";
             attempts++;
             pause();
             continue;
         }
         
-        currentUserId = user->getId();
-        cout << "\n  Р”РѕР±СЂРѕ РїРѕР¶Р°Р»РѕРІР°С‚СЊ, " << user->getName() << "!\n";
+        currentUser = user;
+        cout << "\n  Добро пожаловать, " << user->getName() << "!\n";
         pause();
         return true;
     }
     
-    cout << "\n  Р”РѕСЃС‚СѓРї Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ. РћР±СЂР°С‚РёС‚РµСЃСЊ Рє Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂСѓ.\n";
+    cout << "\n  Доступ заблокирован. Обратитесь к администратору.\n";
     pause();
     return false;
 }
 
-// ====================== Р РђР‘РћРўРђ РЎ РљР›РР•РќРўРђРњР ======================
+// ====================== РАБОТА С КЛИЕНТАМИ ======================
 
 void showClients() {
-    showHeader("РЎРџРРЎРћРљ РљР›РР•РќРўРћР’");
+    showHeader("СПИСОК КЛИЕНТОВ");
     DataManager& dm = DataManager::getInstance();
     auto& clients = dm.getClients();
     
     if (clients.empty()) {
-        cout << "  РЎРїРёСЃРѕРє РєР»РёРµРЅС‚РѕРІ РїСѓСЃС‚.\n";
+        cout << "  Список клиентов пуст.\n";
     } else {
         cout << left << setw(6) << "  ID"
-                  << setw(38) << "Р¤РРћ"
-                  << setw(18) << "РўРµР»РµС„РѕРЅ"
-                  << "РЎРєРёРґРєР°\n";
+                  << setw(38) << "ФИО"
+                  << setw(18) << "Телефон"
+                  << "Скидка\n";
         cout << "  " << string(65, '-') << "\n";
         
         for (const auto& c : clients) {
@@ -243,27 +240,27 @@ void showClients() {
                       << setw(18) << c.getPhone()
                       << fixed << setprecision(1) << c.getDiscount() << "%\n";
         }
-        cout << "\n  Р’СЃРµРіРѕ РєР»РёРµРЅС‚РѕРІ: " << clients.size() << "\n";
+        cout << "\n  Всего клиентов: " << clients.size() << "\n";
     }
     pause();
 }
 
 void addClient() {
-    showHeader("Р”РћР‘РђР’Р›Р•РќРР• РљР›РР•РќРўРђ");
+    showHeader("ДОБАВЛЕНИЕ КЛИЕНТА");
     DataManager& dm = DataManager::getInstance();
     
-    string name = readLine("  Р¤РРћ: ");
+    string name = readLine("  ФИО: ");
     if (name.length() < 3) {
-        cout << "  РћРЁРР‘РљРђ: Р¤РРћ РґРѕР»Р¶РЅРѕ СЃРѕРґРµСЂР¶Р°С‚СЊ РјРёРЅРёРјСѓРј 3 СЃРёРјРІРѕР»Р°!\n";
+        cout << "  ОШИБКА: ФИО должно содержать минимум 3 символа!\n";
         pause();
         return;
     }
     
-    string phone = readLine("  РўРµР»РµС„РѕРЅ: ");
-    double discount = readDouble("  РЎРєРёРґРєР° (%): ", 0.0);
+    string phone = readLine("  Телефон: ");
+    double discount = readDouble("  Скидка (%): ", 0.0);
     
     if (discount > 100) {
-        cout << "  РћРЁРР‘РљРђ: РЎРєРёРґРєР° РЅРµ РјРѕР¶РµС‚ РїСЂРµРІС‹С€Р°С‚СЊ 100%!\n";
+        cout << "  ОШИБКА: Скидка не может превышать 100%!\n";
         pause();
         return;
     }
@@ -273,33 +270,33 @@ void addClient() {
     dm.addClient(client);
     dm.saveAll();
     
-    cout << "\n  РљР»РёРµРЅС‚ СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ! ID: " << newId << "\n";
+    cout << "\n  Клиент успешно добавлен! ID: " << newId << "\n";
     pause();
 }
 
 void editClient() {
-    showHeader("Р Р•Р”РђРљРўРР РћР’РђРќРР• РљР›РР•РќРўРђ");
+    showHeader("РЕДАКТИРОВАНИЕ КЛИЕНТА");
     DataManager& dm = DataManager::getInstance();
     
-    int id = readInt("  Р’РІРµРґРёС‚Рµ ID РєР»РёРµРЅС‚Р°: ");
+    int id = readInt("  Введите ID клиента: ");
     const Client* client = dm.findClientById(id);
     
     if (!client) {
-        cout << "  РћРЁРР‘РљРђ: РљР»РёРµРЅС‚ РЅРµ РЅР°Р№РґРµРЅ!\n";
+        cout << "  ОШИБКА: Клиент не найден!\n";
         pause();
         return;
     }
     
-    cout << "\n  РўРµРєСѓС‰РёРµ РґР°РЅРЅС‹Рµ:\n";
-    cout << "  Р¤РРћ: " << client->getName() << "\n";
-    cout << "  РўРµР»РµС„РѕРЅ: " << client->getPhone() << "\n";
-    cout << "  РЎРєРёРґРєР°: " << client->getDiscount() << "%\n\n";
+    cout << "\n  Текущие данные:\n";
+    cout << "  ФИО: " << client->getName() << "\n";
+    cout << "  Телефон: " << client->getPhone() << "\n";
+    cout << "  Скидка: " << client->getDiscount() << "%\n\n";
     
-    cout << "  Р’РІРµРґРёС‚Рµ РЅРѕРІС‹Рµ РґР°РЅРЅС‹Рµ (Enter - РѕСЃС‚Р°РІРёС‚СЊ Р±РµР· РёР·РјРµРЅРµРЅРёР№):\n";
+    cout << "  Введите новые данные (Enter - оставить без изменений):\n";
     
-    string name = readLine("  Р¤РРћ: ");
-    string phone = readLine("  РўРµР»РµС„РѕРЅ: ");
-    string discountStr = readLine("  РЎРєРёРґРєР° (%): ");
+    string name = readLine("  ФИО: ");
+    string phone = readLine("  Телефон: ");
+    string discountStr = readLine("  Скидка (%): ");
     
     Client updated = *client;
     if (!name.empty()) updated.setName(name);
@@ -309,47 +306,47 @@ void editClient() {
     dm.updateClient(id, updated);
     dm.saveAll();
     
-    cout << "\n  Р”Р°РЅРЅС‹Рµ РєР»РёРµРЅС‚Р° РѕР±РЅРѕРІР»РµРЅС‹!\n";
+    cout << "\n  Данные клиента обновлены!\n";
     pause();
 }
 
 void deleteClient() {
-    showHeader("РЈР”РђР›Р•РќРР• РљР›РР•РќРўРђ");
+    showHeader("УДАЛЕНИЕ КЛИЕНТА");
     DataManager& dm = DataManager::getInstance();
     
-    int id = readInt("  Р’РІРµРґРёС‚Рµ ID РєР»РёРµРЅС‚Р°: ");
+    int id = readInt("  Введите ID клиента: ");
     const Client* client = dm.findClientById(id);
     
     if (!client) {
-        cout << "  РћРЁРР‘РљРђ: РљР»РёРµРЅС‚ РЅРµ РЅР°Р№РґРµРЅ!\n";
+        cout << "  ОШИБКА: Клиент не найден!\n";
         pause();
         return;
     }
     
-    cout << "\n  РљР»РёРµРЅС‚: " << client->getName() << "\n";
-    cout << "  Р’РќРРњРђРќРР•: Р‘СѓРґСѓС‚ СѓРґР°Р»РµРЅС‹ РІСЃРµ СЃРІСЏР·Р°РЅРЅС‹Рµ РґР°РЅРЅС‹Рµ!\n\n";
+    cout << "\n  Клиент: " << client->getName() << "\n";
+    cout << "  ВНИМАНИЕ: Будут удалены все связанные данные!\n\n";
     
-    if (confirm("  РџРѕРґС‚РІРµСЂРґРёС‚Рµ СѓРґР°Р»РµРЅРёРµ")) {
+    if (confirm("  Подтвердите удаление")) {
         dm.deleteClient(id);
         dm.saveAll();
-        cout << "\n  РљР»РёРµРЅС‚ СѓРґР°Р»С‘РЅ.\n";
+        cout << "\n  Клиент удалён.\n";
     } else {
-        cout << "\n  РћРїРµСЂР°С†РёСЏ РѕС‚РјРµРЅРµРЅР°.\n";
+        cout << "\n  Операция отменена.\n";
     }
     pause();
 }
 
 void clientsMenu() {
     while (true) {
-        showHeader("РљР›РР•РќРўР«");
-        cout << "  1. РџСЂРѕСЃРјРѕС‚СЂ РІСЃРµС… РєР»РёРµРЅС‚РѕРІ\n";
-        cout << "  2. Р”РѕР±Р°РІРёС‚СЊ РєР»РёРµРЅС‚Р°\n";
-        cout << "  3. Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РєР»РёРµРЅС‚Р°\n";
-        cout << "  4. РЈРґР°Р»РёС‚СЊ РєР»РёРµРЅС‚Р°\n";
+        showHeader("КЛИЕНТЫ");
+        cout << "  1. Просмотр всех клиентов\n";
+        cout << "  2. Добавить клиента\n";
+        cout << "  3. Редактировать клиента\n";
+        cout << "  4. Удалить клиента\n";
         cout << "  " << string(30, '-') << "\n";
-        cout << "  0. РќР°Р·Р°Рґ\n\n";
+        cout << "  0. Назад\n\n";
         
-        int choice = readInt("  Р’С‹Р±РµСЂРёС‚Рµ РїСѓРЅРєС‚ РјРµРЅСЋ: ", 0, 4);
+        int choice = readInt("  Выберите пункт меню: ", 0, 4);
         
         switch (choice) {
             case 1: showClients(); break;
@@ -361,28 +358,28 @@ void clientsMenu() {
     }
 }
 
-// ====================== Р РђР‘РћРўРђ РЎ РђР’РўРћРњРћР‘РР›РЇРњР ======================
+// ====================== РАБОТА С АВТОМОБИЛЯМИ ======================
 
 void showCars() {
-    showHeader("РЎРџРРЎРћРљ РђР’РўРћРњРћР‘РР›Р•Р™");
+    showHeader("СПИСОК АВТОМОБИЛЕЙ");
     DataManager& dm = DataManager::getInstance();
     auto& cars = dm.getCars();
     
     if (cars.empty()) {
-        cout << "  РЎРїРёСЃРѕРє Р°РІС‚РѕРјРѕР±РёР»РµР№ РїСѓСЃС‚.\n";
+        cout << "  Список автомобилей пуст.\n";
     } else {
         cout << left << setw(6) << "  ID"
-                  << setw(15) << "РњР°СЂРєР°"
-                  << setw(15) << "РњРѕРґРµР»СЊ"
-                  << setw(8) << "Р“РѕРґ"
-                  << setw(15) << "Р“РѕСЃРЅРѕРјРµСЂ"
-                  << "Р’Р»Р°РґРµР»РµС†\n";
+                  << setw(15) << "Марка"
+                  << setw(15) << "Модель"
+                  << setw(8) << "Год"
+                  << setw(15) << "Госномер"
+                  << "Владелец\n";
         cout << "  " << string(70, '-') << "\n";
         
         for (const auto& car : cars) {
             const Client* owner = dm.findClientById(car.getClientId());
-            string ownerName = owner ? owner->getName() : "РќРµРёР·РІРµСЃС‚РµРЅ";
-            // РЎРѕРєСЂР°С‰Р°РµРј РёРјСЏ РґРѕ С„Р°РјРёР»РёРё
+            string ownerName = owner ? owner->getName() : "Неизвестен";
+            // Сокращаем имя до фамилии
             size_t spacePos = ownerName.find(' ');
             if (spacePos != string::npos) {
                 ownerName = ownerName.substr(0, spacePos);
@@ -395,66 +392,66 @@ void showCars() {
                       << setw(15) << car.getRegNumber()
                       << ownerName << "\n";
         }
-        cout << "\n  Р’СЃРµРіРѕ Р°РІС‚РѕРјРѕР±РёР»РµР№: " << cars.size() << "\n";
+        cout << "\n  Всего автомобилей: " << cars.size() << "\n";
     }
     pause();
 }
 
 void addCar() {
-    showHeader("Р”РћР‘РђР’Р›Р•РќРР• РђР’РўРћРњРћР‘РР›РЇ");
+    showHeader("ДОБАВЛЕНИЕ АВТОМОБИЛЯ");
     DataManager& dm = DataManager::getInstance();
     
-    // РџРѕРєР°Р·С‹РІР°РµРј СЃРїРёСЃРѕРє РєР»РёРµРЅС‚РѕРІ
+    // Показываем список клиентов
     auto& clients = dm.getClients();
     if (clients.empty()) {
-        cout << "  РЎРЅР°С‡Р°Р»Р° РґРѕР±Р°РІСЊС‚Рµ РєР»РёРµРЅС‚Р°!\n";
+        cout << "  Сначала добавьте клиента!\n";
         pause();
         return;
     }
     
-    cout << "  РЎРїРёСЃРѕРє РєР»РёРµРЅС‚РѕРІ:\n";
+    cout << "  Список клиентов:\n";
     for (const auto& c : clients) {
         cout << "  " << c.getId() << ". " << c.getName() << "\n";
     }
     cout << "\n";
     
-    int clientId = readInt("  ID РєР»РёРµРЅС‚Р°: ");
+    int clientId = readInt("  ID клиента: ");
     if (!dm.findClientById(clientId)) {
-        cout << "  РћРЁРР‘РљРђ: РљР»РёРµРЅС‚ РЅРµ РЅР°Р№РґРµРЅ!\n";
+        cout << "  ОШИБКА: Клиент не найден!\n";
         pause();
         return;
     }
     
-    string brand = readLine("  РњР°СЂРєР°: ");
-    string model = readLine("  РњРѕРґРµР»СЊ: ");
-    int year = readInt("  Р“РѕРґ РІС‹РїСѓСЃРєР°: ", 1900, 2100);
-    string regNumber = readLine("  Р“РѕСЃРЅРѕРјРµСЂ: ");
+    string brand = readLine("  Марка: ");
+    string model = readLine("  Модель: ");
+    int year = readInt("  Год выпуска: ", 1900, 2100);
+    string regNumber = readLine("  Госномер: ");
     
     int newId = Car::getNextId();
     Car car(newId, brand, model, year, regNumber, clientId);
     dm.addCar(car);
     dm.saveAll();
     
-    cout << "\n  РђРІС‚РѕРјРѕР±РёР»СЊ РґРѕР±Р°РІР»РµРЅ! ID: " << newId << "\n";
+    cout << "\n  Автомобиль добавлен! ID: " << newId << "\n";
     pause();
 }
 
 
 
 void editCar() {
-    showHeader("Р Р•Р”РђРљРўРР РћР’РђРќРР• РђР’РўРћРњРћР‘РР›РЇ");
+    showHeader("РЕДАКТИРОВАНИЕ АВТОМОБИЛЯ");
     DataManager& dm = DataManager::getInstance();
     
     auto& cars = dm.getCars();
     if (cars.empty()) {
-        cout << "  РЎРїРёСЃРѕРє Р°РІС‚РѕРјРѕР±РёР»РµР№ РїСѓСЃС‚.\n";
+        cout << "  Список автомобилей пуст.\n";
         pause();
         return;
     }
     
-    cout << "  РЎРїРёСЃРѕРє Р°РІС‚РѕРјРѕР±РёР»РµР№:\n";
-    cout << "  " << left << setw(5) << "ID" << setw(15) << "РњР°СЂРєР°" 
-         << setw(15) << "РњРѕРґРµР»СЊ" << setw(8) << "Р“РѕРґ" << "Р“РѕСЃРЅРѕРјРµСЂ\n";
+    cout << "  Список автомобилей:\n";
+    cout << "  " << left << setw(5) << "ID" << setw(15) << "Марка" 
+         << setw(15) << "Модель" << setw(8) << "Год" << "Госномер\n";
     cout << "  " << string(50, '-') << "\n";
     for (const auto& c : cars) {
         cout << "  " << left << setw(5) << c.getId() << setw(15) << c.getBrand() 
@@ -462,30 +459,30 @@ void editCar() {
     }
     cout << "\n";
     
-    int id = readInt("  Р’РІРµРґРёС‚Рµ ID Р°РІС‚РѕРјРѕР±РёР»СЏ: ");
+    int id = readInt("  Введите ID автомобиля: ");
     const Car* car = dm.findCarById(id);
     
     if (!car) {
-        cout << "  РћРЁРР‘РљРђ: РђРІС‚РѕРјРѕР±РёР»СЊ РЅРµ РЅР°Р№РґРµРЅ!\n";
+        cout << "  ОШИБКА: Автомобиль не найден!\n";
         pause();
         return;
     }
     
     const Client* owner = dm.findClientById(car->getClientId());
     
-    cout << "\n  РўРµРєСѓС‰РёРµ РґР°РЅРЅС‹Рµ:\n";
-    cout << "  РњР°СЂРєР°: " << car->getBrand() << "\n";
-    cout << "  РњРѕРґРµР»СЊ: " << car->getModel() << "\n";
-    cout << "  Р“РѕРґ: " << car->getYear() << "\n";
-    cout << "  Р“РѕСЃРЅРѕРјРµСЂ: " << car->getRegNumber() << "\n";
-    cout << "  Р’Р»Р°РґРµР»РµС†: " << (owner ? owner->getName() : "???") << "\n\n";
+    cout << "\n  Текущие данные:\n";
+    cout << "  Марка: " << car->getBrand() << "\n";
+    cout << "  Модель: " << car->getModel() << "\n";
+    cout << "  Год: " << car->getYear() << "\n";
+    cout << "  Госномер: " << car->getRegNumber() << "\n";
+    cout << "  Владелец: " << (owner ? owner->getName() : "???") << "\n\n";
     
-    cout << "  Р’РІРµРґРёС‚Рµ РЅРѕРІС‹Рµ РґР°РЅРЅС‹Рµ (Enter - РѕСЃС‚Р°РІРёС‚СЊ Р±РµР· РёР·РјРµРЅРµРЅРёР№):\n";
+    cout << "  Введите новые данные (Enter - оставить без изменений):\n";
     
-    string brand = readLine("  РњР°СЂРєР°: ");
-    string model = readLine("  РњРѕРґРµР»СЊ: ");
-    string yearStr = readLine("  Р“РѕРґ: ");
-    string regNumber = readLine("  Р“РѕСЃРЅРѕРјРµСЂ: ");
+    string brand = readLine("  Марка: ");
+    string model = readLine("  Модель: ");
+    string yearStr = readLine("  Год: ");
+    string regNumber = readLine("  Госномер: ");
     
     Car updated = *car;
     if (!brand.empty()) updated.setBrand(brand);
@@ -496,24 +493,24 @@ void editCar() {
     dm.updateCar(id, updated);
     dm.saveAll();
     
-    cout << "\n  Р”Р°РЅРЅС‹Рµ Р°РІС‚РѕРјРѕР±РёР»СЏ РѕР±РЅРѕРІР»РµРЅС‹!\n";
+    cout << "\n  Данные автомобиля обновлены!\n";
     pause();
 }
 
 void deleteCar() {
-    showHeader("РЈР”РђР›Р•РќРР• РђР’РўРћРњРћР‘РР›РЇ");
+    showHeader("УДАЛЕНИЕ АВТОМОБИЛЯ");
     DataManager& dm = DataManager::getInstance();
     
     auto& cars = dm.getCars();
     if (cars.empty()) {
-        cout << "  РЎРїРёСЃРѕРє Р°РІС‚РѕРјРѕР±РёР»РµР№ РїСѓСЃС‚.\n";
+        cout << "  Список автомобилей пуст.\n";
         pause();
         return;
     }
     
-    cout << "  РЎРїРёСЃРѕРє Р°РІС‚РѕРјРѕР±РёР»РµР№:\n";
-    cout << "  " << left << setw(5) << "ID" << setw(15) << "РњР°СЂРєР°" 
-         << setw(15) << "РњРѕРґРµР»СЊ" << setw(8) << "Р“РѕРґ" << "Р“РѕСЃРЅРѕРјРµСЂ\n";
+    cout << "  Список автомобилей:\n";
+    cout << "  " << left << setw(5) << "ID" << setw(15) << "Марка" 
+         << setw(15) << "Модель" << setw(8) << "Год" << "Госномер\n";
     cout << "  " << string(50, '-') << "\n";
     for (const auto& c : cars) {
         cout << "  " << left << setw(5) << c.getId() << setw(15) << c.getBrand() 
@@ -521,44 +518,44 @@ void deleteCar() {
     }
     cout << "\n";
     
-    int id = readInt("  Р’РІРµРґРёС‚Рµ ID Р°РІС‚РѕРјРѕР±РёР»СЏ: ");
+    int id = readInt("  Введите ID автомобиля: ");
     const Car* car = dm.findCarById(id);
     
     if (!car) {
-        cout << "  РћРЁРР‘РљРђ: РђРІС‚РѕРјРѕР±РёР»СЊ РЅРµ РЅР°Р№РґРµРЅ!\n";
+        cout << "  ОШИБКА: Автомобиль не найден!\n";
         pause();
         return;
     }
     
     const Client* owner = dm.findClientById(car->getClientId());
     
-    cout << "\n  РђРІС‚РѕРјРѕР±РёР»СЊ: " << car->getBrand() << " " << car->getModel() << "\n";
-    cout << "  Р“РѕРґ: " << car->getYear() << "\n";
-    cout << "  Р“РѕСЃРЅРѕРјРµСЂ: " << car->getRegNumber() << "\n";
-    cout << "  Р’Р»Р°РґРµР»РµС†: " << (owner ? owner->getName() : "???") << "\n";
-    cout << "  Р’РќРРњРђРќРР•: Р‘СѓРґСѓС‚ СѓРґР°Р»РµРЅС‹ РІСЃРµ СЃРІСЏР·Р°РЅРЅС‹Рµ Р·Р°СЏРІРєРё!\n\n";
+    cout << "\n  Автомобиль: " << car->getBrand() << " " << car->getModel() << "\n";
+    cout << "  Год: " << car->getYear() << "\n";
+    cout << "  Госномер: " << car->getRegNumber() << "\n";
+    cout << "  Владелец: " << (owner ? owner->getName() : "???") << "\n";
+    cout << "  ВНИМАНИЕ: Будут удалены все связанные заявки!\n\n";
     
-    if (confirm("  РџРѕРґС‚РІРµСЂРґРёС‚Рµ СѓРґР°Р»РµРЅРёРµ")) {
+    if (confirm("  Подтвердите удаление")) {
         dm.deleteCar(id);
         dm.saveAll();
-        cout << "\n  РђРІС‚РѕРјРѕР±РёР»СЊ СѓРґР°Р»С‘РЅ.\n";
+        cout << "\n  Автомобиль удалён.\n";
     } else {
-        cout << "\n  РћРїРµСЂР°С†РёСЏ РѕС‚РјРµРЅРµРЅР°.\n";
+        cout << "\n  Операция отменена.\n";
     }
     pause();
 }
 
 void carsMenu() {
     while (true) {
-        showHeader("РђР’РўРћРњРћР‘РР›Р");
-        cout << "  1. РџСЂРѕСЃРјРѕС‚СЂ РІСЃРµС… Р°РІС‚РѕРјРѕР±РёР»РµР№\n";
-        cout << "  2. Р”РѕР±Р°РІРёС‚СЊ Р°РІС‚РѕРјРѕР±РёР»СЊ\n";
-        cout << "  3. Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ Р°РІС‚РѕРјРѕР±РёР»СЊ\n";
-        cout << "  4. РЈРґР°Р»РёС‚СЊ Р°РІС‚РѕРјРѕР±РёР»СЊ\n";
+        showHeader("АВТОМОБИЛИ");
+        cout << "  1. Просмотр всех автомобилей\n";
+        cout << "  2. Добавить автомобиль\n";
+        cout << "  3. Редактировать автомобиль\n";
+        cout << "  4. Удалить автомобиль\n";
         cout << "  " << string(30, '-') << "\n";
-        cout << "  0. РќР°Р·Р°Рґ\n\n";
+        cout << "  0. Назад\n\n";
         
-        int choice = readInt("  Р’С‹Р±РµСЂРёС‚Рµ РїСѓРЅРєС‚ РјРµРЅСЋ: ", 0, 4);
+        int choice = readInt("  Выберите пункт меню: ", 0, 4);
         
         switch (choice) {
             case 1: showCars(); break;
@@ -570,22 +567,22 @@ void carsMenu() {
     }
 }
 
-// ====================== Р РђР‘РћРўРђ РЎ Р—РђРЇР’РљРђРњР ======================
+// ====================== РАБОТА С ЗАЯВКАМИ ======================
 
 void showOrders() {
-    showHeader("РЎРџРРЎРћРљ Р—РђРЇР’РћРљ");
+    showHeader("СПИСОК ЗАЯВОК");
     DataManager& dm = DataManager::getInstance();
     auto& orders = dm.getOrders();
     
     if (orders.empty()) {
-        cout << "  РЎРїРёСЃРѕРє Р·Р°СЏРІРѕРє РїСѓСЃС‚.\n";
+        cout << "  Список заявок пуст.\n";
     } else {
         cout << left << setw(5) << "  ID"
-                  << setw(25) << "РљР»РёРµРЅС‚"
-                  << setw(20) << "РђРІС‚РѕРјРѕР±РёР»СЊ"
-                  << setw(12) << "Р”Р°С‚Р°"
-                  << setw(12) << "РЎС‚Р°С‚СѓСЃ"
-                  << "РЎСѓРјРјР°\n";
+                  << setw(25) << "Клиент"
+                  << setw(20) << "Автомобиль"
+                  << setw(12) << "Дата"
+                  << setw(12) << "Статус"
+                  << "Сумма\n";
         cout << "  " << string(81, '-') << "\n";
         
         for (const auto& order : orders) {
@@ -607,43 +604,43 @@ void showOrders() {
                       << setw(12) << order.getStatusString()
                       << fixed << setprecision(2) << order.getTotalCost() << " BYN\n";
         }
-        cout << "\n  Р’СЃРµРіРѕ Р·Р°СЏРІРѕРє: " << orders.size() << "\n";
+        cout << "\n  Всего заявок: " << orders.size() << "\n";
     }
     pause();
 }
 
 void createOrder() {
-    showHeader("РЎРћР—Р”РђРќРР• Р—РђРЇР’РљР");
+    showHeader("СОЗДАНИЕ ЗАЯВКИ");
     DataManager& dm = DataManager::getInstance();
     
-    // РЁР°Рі 1: Р’С‹Р±РѕСЂ РєР»РёРµРЅС‚Р°
+    // Шаг 1: Выбор клиента
     auto& clients = dm.getClients();
     if (clients.empty()) {
-        cout << "  РЎРЅР°С‡Р°Р»Р° РґРѕР±Р°РІСЊС‚Рµ РєР»РёРµРЅС‚Р°!\n";
+        cout << "  Сначала добавьте клиента!\n";
         pause();
         return;
     }
     
-    cout << "  РЁРђР“ 1: Р’С‹Р±РѕСЂ РєР»РёРµРЅС‚Р°\n";
+    cout << "  ШАГ 1: Выбор клиента\n";
     cout << "  " << string(40, '-') << "\n";
     for (const auto& c : clients) {
         cout << "  " << c.getId() << ". " << c.getName() << "\n";
     }
     
-    int clientId = readInt("\n  ID РєР»РёРµРЅС‚Р°: ");
+    int clientId = readInt("\n  ID клиента: ");
     const Client* client = dm.findClientById(clientId);
     if (!client) {
-        cout << "  РћРЁРР‘РљРђ: РљР»РёРµРЅС‚ РЅРµ РЅР°Р№РґРµРЅ!\n";
+        cout << "  ОШИБКА: Клиент не найден!\n";
         pause();
         return;
     }
     
-    // РЁР°Рі 2: Р’С‹Р±РѕСЂ Р°РІС‚РѕРјРѕР±РёР»СЏ
-    cout << "\n  РЁРђР“ 2: Р’С‹Р±РѕСЂ Р°РІС‚РѕРјРѕР±РёР»СЏ\n";
+    // Шаг 2: Выбор автомобиля
+    cout << "\n  ШАГ 2: Выбор автомобиля\n";
     cout << "  " << string(40, '-') << "\n";
     auto clientCars = dm.getCarsByClientId(clientId);
     if (clientCars.empty()) {
-        cout << "  РЈ РєР»РёРµРЅС‚Р° РЅРµС‚ Р°РІС‚РѕРјРѕР±РёР»РµР№. Р”РѕР±Р°РІСЊС‚Рµ Р°РІС‚РѕРјРѕР±РёР»СЊ.\n";
+        cout << "  У клиента нет автомобилей. Добавьте автомобиль.\n";
         pause();
         return;
     }
@@ -652,16 +649,16 @@ void createOrder() {
         cout << "  " << car.getId() << ". " << car.getInfo() << "\n";
     }
     
-    int carId = readInt("\n  ID Р°РІС‚РѕРјРѕР±РёР»СЏ: ");
+    int carId = readInt("\n  ID автомобиля: ");
     const Car* car = dm.findCarById(carId);
     if (!car || car->getClientId() != clientId) {
-        cout << "  РћРЁРР‘РљРђ: РђРІС‚РѕРјРѕР±РёР»СЊ РЅРµ РЅР°Р№РґРµРЅ!\n";
+        cout << "  ОШИБКА: Автомобиль не найден!\n";
         pause();
         return;
     }
     
-    // РЁР°Рі 3: Р’С‹Р±РѕСЂ СѓСЃР»СѓРі
-    cout << "\n  РЁРђР“ 3: Р’С‹Р±РѕСЂ СѓСЃР»СѓРі\n";
+    // Шаг 3: Выбор услуг
+    cout << "\n  ШАГ 3: Выбор услуг\n";
     cout << "  " << string(40, '-') << "\n";
     auto& services = dm.getServiceTypes();
     for (const auto& s : services) {
@@ -669,7 +666,7 @@ void createOrder() {
                   << " - " << fixed << setprecision(2) << s.getPrice() << " BYN\n";
     }
     
-    cout << "\n  Р’РІРµРґРёС‚Рµ ID СѓСЃР»СѓРі С‡РµСЂРµР· Р·Р°РїСЏС‚СѓСЋ: ";
+    cout << "\n  Введите ID услуг через запятую: ";
     string servicesInput;
     getline(cin, servicesInput);
     
@@ -686,81 +683,81 @@ void createOrder() {
     }
     
     if (serviceIds.empty()) {
-        cout << "  РћРЁРР‘РљРђ: Р’С‹Р±РµСЂРёС‚Рµ С…РѕС‚СЏ Р±С‹ РѕРґРЅСѓ СѓСЃР»СѓРіСѓ!\n";
+        cout << "  ОШИБКА: Выберите хотя бы одну услугу!\n";
         pause();
         return;
     }
     
-    // РЁР°Рі 4: Р’С‹Р±РѕСЂ РёСЃРїРѕР»РЅРёС‚РµР»СЏ Рё РґР°С‚С‹
-    cout << "\n  РЁРђР“ 4: РСЃРїРѕР»РЅРёС‚РµР»СЊ Рё РґР°С‚Р°\n";
+    // Шаг 4: Выбор исполнителя и даты
+    cout << "\n  ШАГ 4: Исполнитель и дата\n";
     cout << "  " << string(40, '-') << "\n";
     auto& employees = dm.getEmployees();
     for (const auto& e : employees) {
         cout << "  " << e.getId() << ". " << e.getName() << " (" << e.getPosition() << ")\n";
     }
     
-    int employeeId = readInt("\n  ID РёСЃРїРѕР»РЅРёС‚РµР»СЏ: ");
+    int employeeId = readInt("\n  ID исполнителя: ");
     if (!dm.findEmployeeById(employeeId)) {
-        cout << "  РћРЁРР‘РљРђ: РЎРѕС‚СЂСѓРґРЅРёРє РЅРµ РЅР°Р№РґРµРЅ!\n";
+        cout << "  ОШИБКА: Сотрудник не найден!\n";
         pause();
         return;
     }
     
-    string date = readLine("  Р”Р°С‚Р° (Р”Р”.РњРњ.Р“Р“Р“Р“) [Enter - СЃРµРіРѕРґРЅСЏ]: ");
+    string date = readLine("  Дата (ДД.ММ.ГГГГ) [Enter - сегодня]: ");
     if (date.empty()) {
         date = getCurrentDate();
     }
     
-    // Р Р°СЃС‡С‘С‚ СЃС‚РѕРёРјРѕСЃС‚Рё
+    // Расчёт стоимости
     double totalCost = dm.calculateOrderCost(serviceIds, client->getDiscount());
     
-    // РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ
+    // Подтверждение
     cout << "\n  " << string(40, '=') << "\n";
-    cout << "  РРўРћР“Рћ:\n";
-    cout << "  РљР»РёРµРЅС‚: " << client->getName() << "\n";
-    cout << "  РђРІС‚РѕРјРѕР±РёР»СЊ: " << car->getInfo() << "\n";
-    cout << "  РЈСЃР»СѓРі: " << serviceIds.size() << "\n";
-    cout << "  РЎРєРёРґРєР°: " << client->getDiscount() << "%\n";
-    cout << "  РЎС‚РѕРёРјРѕСЃС‚СЊ: " << fixed << setprecision(2) << totalCost << " BYN\n";
+    cout << "  ИТОГО:\n";
+    cout << "  Клиент: " << client->getName() << "\n";
+    cout << "  Автомобиль: " << car->getInfo() << "\n";
+    cout << "  Услуг: " << serviceIds.size() << "\n";
+    cout << "  Скидка: " << client->getDiscount() << "%\n";
+    cout << "  Стоимость: " << fixed << setprecision(2) << totalCost << " BYN\n";
     cout << "  " << string(40, '=') << "\n";
     
-    if (confirm("\n  РЎРѕР·РґР°С‚СЊ Р·Р°СЏРІРєСѓ?")) {
+    if (confirm("\n  Создать заявку?")) {
         int newId = ServiceOrder::getNextId();
         ServiceOrder order(newId, clientId, carId, employeeId, date, 
                            OrderStatus::NEW, serviceIds, totalCost);
         dm.addOrder(order);
         dm.saveAll();
         
-        cout << "\n  Р—Р°СЏРІРєР° СЃРѕР·РґР°РЅР°! РќРѕРјРµСЂ: " << newId << "\n";
+        cout << "\n  Заявка создана! Номер: " << newId << "\n";
     } else {
-        cout << "\n  РћРїРµСЂР°С†РёСЏ РѕС‚РјРµРЅРµРЅР°.\n";
+        cout << "\n  Операция отменена.\n";
     }
     pause();
 }
 
 void changeOrderStatus() {
-    showHeader("РР—РњР•РќР•РќРР• РЎРўРђРўРЈРЎРђ Р—РђРЇР’РљР");
+    showHeader("ИЗМЕНЕНИЕ СТАТУСА ЗАЯВКИ");
     DataManager& dm = DataManager::getInstance();
     
-    int id = readInt("  Р’РІРµРґРёС‚Рµ ID Р·Р°СЏРІРєРё: ");
+    int id = readInt("  Введите ID заявки: ");
     const ServiceOrder* order = dm.findOrderById(id);
     
     if (!order) {
-        cout << "  РћРЁРР‘РљРђ: Р—Р°СЏРІРєР° РЅРµ РЅР°Р№РґРµРЅР°!\n";
+        cout << "  ОШИБКА: Заявка не найдена!\n";
         pause();
         return;
     }
     
-    cout << "\n  Р—Р°СЏРІРєР° #" << id << "\n";
-    cout << "  РўРµРєСѓС‰РёР№ СЃС‚Р°С‚СѓСЃ: " << order->getStatusString() << "\n\n";
+    cout << "\n  Заявка #" << id << "\n";
+    cout << "  Текущий статус: " << order->getStatusString() << "\n\n";
     
-    cout << "  Р’С‹Р±РµСЂРёС‚Рµ РЅРѕРІС‹Р№ СЃС‚Р°С‚СѓСЃ:\n";
-    cout << "  1. РќРѕРІР°СЏ\n";
-    cout << "  2. Р’ СЂР°Р±РѕС‚Рµ\n";
-    cout << "  3. Р’С‹РїРѕР»РЅРµРЅР°\n";
-    cout << "  4. Р’С‹РґР°РЅР°\n\n";
+    cout << "  Выберите новый статус:\n";
+    cout << "  1. Новая\n";
+    cout << "  2. В работе\n";
+    cout << "  3. Выполнена\n";
+    cout << "  4. Выдана\n\n";
     
-    int choice = readInt("  Р’Р°С€ РІС‹Р±РѕСЂ: ", 1, 4);
+    int choice = readInt("  Ваш выбор: ", 1, 4);
     
     OrderStatus newStatus;
     switch (choice) {
@@ -776,28 +773,28 @@ void changeOrderStatus() {
     dm.updateOrder(id, updated);
     dm.saveAll();
     
-    cout << "\n  РЎС‚Р°С‚СѓСЃ РёР·РјРµРЅС‘РЅ РЅР°: " << ServiceOrder::statusToString(newStatus) << "\n";
+    cout << "\n  Статус изменён на: " << ServiceOrder::statusToString(newStatus) << "\n";
     pause();
 }
 
 void editOrder() {
-    showHeader("Р Р•Р”РђРљРўРР РћР’РђРќРР• Р—РђРЇР’РљР");
+    showHeader("РЕДАКТИРОВАНИЕ ЗАЯВКИ");
     DataManager& dm = DataManager::getInstance();
 
     auto& orders = dm.getOrders();
     if (orders.empty()) {
-        cout << "  РќРµС‚ Р·Р°СЏРІРѕРє РґР»СЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ.\n";
+        cout << "  Нет заявок для редактирования.\n";
         pause();
         return;
     }
 
-    cout << "  РЎРїРёСЃРѕРє Р·Р°СЏРІРѕРє:\n";
+    cout << "  Список заявок:\n";
     cout << "  " << string(70, '-') << "\n";
     cout << "  " << left << setw(5) << "ID"
-        << setw(20) << "РљР»РёРµРЅС‚"
-        << setw(15) << "РђРІС‚Рѕ"
-        << setw(12) << "Р”Р°С‚Р°"
-        << setw(12) << "РЎС‚Р°С‚СѓСЃ" << "\n";
+        << setw(20) << "Клиент"
+        << setw(15) << "Авто"
+        << setw(12) << "Дата"
+        << setw(12) << "Статус" << "\n";
     cout << "  " << string(70, '-') << "\n";
 
     for (const auto& o : orders) {
@@ -816,11 +813,11 @@ void editOrder() {
     }
     cout << "\n";
 
-    int id = readInt("  Р’РІРµРґРёС‚Рµ ID Р·Р°СЏРІРєРё: ");
+    int id = readInt("  Введите ID заявки: ");
     const ServiceOrder* order = dm.findOrderById(id);
 
     if (!order) {
-        cout << "  РћРЁРР‘РљРђ: Р—Р°СЏРІРєР° РЅРµ РЅР°Р№РґРµРЅР°!\n";
+        cout << "  ОШИБКА: Заявка не найдена!\n";
         pause();
         return;
     }
@@ -830,14 +827,14 @@ void editOrder() {
     const Employee* employee = dm.findEmployeeById(order->getEmployeeId());
 
     cout << "\n  " << string(50, '=') << "\n";
-    cout << "  РўР•РљРЈР©РР• Р”РђРќРќР«Р• Р—РђРЇР’РљР #" << id << "\n";
+    cout << "  ТЕКУЩИЕ ДАННЫЕ ЗАЯВКИ #" << id << "\n";
     cout << "  " << string(50, '=') << "\n";
-    cout << "  РљР»РёРµРЅС‚:     " << (client ? client->getName() : "???") << "\n";
-    cout << "  РђРІС‚РѕРјРѕР±РёР»СЊ: " << (car ? car->getInfo() : "???") << "\n";
-    cout << "  РСЃРїРѕР»РЅРёС‚РµР»СЊ: " << (employee ? employee->getName() : "???") << "\n";
-    cout << "  Р”Р°С‚Р°:       " << order->getDate() << "\n";
-    cout << "  РЎС‚Р°С‚СѓСЃ:     " << order->getStatusString() << "\n";
-    cout << "  РЈСЃР»СѓРіРё:     ";
+    cout << "  Клиент:     " << (client ? client->getName() : "???") << "\n";
+    cout << "  Автомобиль: " << (car ? car->getInfo() : "???") << "\n";
+    cout << "  Исполнитель: " << (employee ? employee->getName() : "???") << "\n";
+    cout << "  Дата:       " << order->getDate() << "\n";
+    cout << "  Статус:     " << order->getStatusString() << "\n";
+    cout << "  Услуги:     ";
 
     auto serviceIds = order->getServiceIds();
     for (size_t i = 0; i < serviceIds.size(); i++) {
@@ -848,19 +845,19 @@ void editOrder() {
         }
     }
     cout << "\n";
-    cout << "  РЎС‚РѕРёРјРѕСЃС‚СЊ:  " << fixed << setprecision(2) << order->getTotalCost() << " BYN\n";
+    cout << "  Стоимость:  " << fixed << setprecision(2) << order->getTotalCost() << " BYN\n";
     cout << "  " << string(50, '-') << "\n\n";
 
-    cout << "  Р§С‚Рѕ СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ?\n";
-    cout << "  1. РСЃРїРѕР»РЅРёС‚РµР»СЏ\n";
-    cout << "  2. Р”Р°С‚Сѓ\n";
-    cout << "  3. РЈСЃР»СѓРіРё\n";
-    cout << "  0. РћС‚РјРµРЅР°\n\n";
+    cout << "  Что редактировать?\n";
+    cout << "  1. Исполнителя\n";
+    cout << "  2. Дату\n";
+    cout << "  3. Услуги\n";
+    cout << "  0. Отмена\n\n";
 
-    int editChoice = readInt("  Р’Р°С€ РІС‹Р±РѕСЂ: ", 0, 3);
+    int editChoice = readInt("  Ваш выбор: ", 0, 3);
 
     if (editChoice == 0) {
-        cout << "  РћС‚РјРµРЅРµРЅРѕ.\n";
+        cout << "  Отменено.\n";
         pause();
         return;
     }
@@ -869,15 +866,15 @@ void editOrder() {
 
     switch (editChoice) {
     case 1: {
-        cout << "\n  Р”РѕСЃС‚СѓРїРЅС‹Рµ СЃРѕС‚СЂСѓРґРЅРёРєРё:\n";
+        cout << "\n  Доступные сотрудники:\n";
         auto& employees = dm.getEmployees();
         for (const auto& e : employees) {
             cout << "  " << e.getId() << ". " << e.getName() << " (" << e.getPosition() << ")\n";
         }
 
-        int newEmployeeId = readInt("\n  ID РЅРѕРІРѕРіРѕ РёСЃРїРѕР»РЅРёС‚РµР»СЏ: ");
+        int newEmployeeId = readInt("\n  ID нового исполнителя: ");
         if (!dm.findEmployeeById(newEmployeeId)) {
-            cout << "  РћРЁРР‘РљРђ: РЎРѕС‚СЂСѓРґРЅРёРє РЅРµ РЅР°Р№РґРµРЅ!\n";
+            cout << "  ОШИБКА: Сотрудник не найден!\n";
             pause();
             return;
         }
@@ -885,9 +882,9 @@ void editOrder() {
         break;
     }
     case 2: {
-        string newDate = readLine("  РќРѕРІР°СЏ РґР°С‚Р° (Р”Р”.РњРњ.Р“Р“Р“Р“): ");
+        string newDate = readLine("  Новая дата (ДД.ММ.ГГГГ): ");
         if (newDate.empty()) {
-            cout << "  РћРЁРР‘РљРђ: Р”Р°С‚Р° РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚РѕР№!\n";
+            cout << "  ОШИБКА: Дата не может быть пустой!\n";
             pause();
             return;
         }
@@ -895,7 +892,7 @@ void editOrder() {
         break;
     }
     case 3: {
-        cout << "\n  Р”РѕСЃС‚СѓРїРЅС‹Рµ СѓСЃР»СѓРіРё:\n";
+        cout << "\n  Доступные услуги:\n";
         auto& services = dm.getServiceTypes();
         for (const auto& s : services) {
             cout << "  " << left << setw(3) << s.getId() << ". "
@@ -903,7 +900,7 @@ void editOrder() {
                 << fixed << setprecision(2) << s.getPrice() << " BYN\n";
         }
 
-        string servicesInput = readLine("\n  ID СѓСЃР»СѓРі С‡РµСЂРµР· Р·Р°РїСЏС‚СѓСЋ: ");
+        string servicesInput = readLine("\n  ID услуг через запятую: ");
         vector<int> newServiceIds;
         stringstream ss(servicesInput);
         string token;
@@ -919,7 +916,7 @@ void editOrder() {
         }
 
         if (newServiceIds.empty()) {
-            cout << "  РћРЁРР‘РљРђ: РќРµ РІС‹Р±СЂР°РЅС‹ РєРѕСЂСЂРµРєС‚РЅС‹Рµ СѓСЃР»СѓРіРё!\n";
+            cout << "  ОШИБКА: Не выбраны корректные услуги!\n";
             pause();
             return;
         }
@@ -943,54 +940,54 @@ void editOrder() {
     dm.updateOrder(id, updated);
     dm.saveAll();
 
-    cout << "\n  Р—Р°СЏРІРєР° РѕР±РЅРѕРІР»РµРЅР°!\n";
+    cout << "\n  Заявка обновлена!\n";
     pause();
 }
 
 void deleteOrder() {
-    showHeader("РЈР”РђР›Р•РќРР• Р—РђРЇР’РљР");
+    showHeader("УДАЛЕНИЕ ЗАЯВКИ");
     DataManager& dm = DataManager::getInstance();
 
-    int id = readInt("  Р’РІРµРґРёС‚Рµ ID Р·Р°СЏРІРєРё: ");
+    int id = readInt("  Введите ID заявки: ");
     const ServiceOrder* order = dm.findOrderById(id);
 
     if (!order) {
-        cout << "  РћРЁРР‘РљРђ: Р—Р°СЏРІРєР° РЅРµ РЅР°Р№РґРµРЅР°!\n";
+        cout << "  ОШИБКА: Заявка не найдена!\n";
         pause();
         return;
     }
 
     const Client* client = dm.findClientById(order->getClientId());
 
-    cout << "\n  Р—Р°СЏРІРєР° #" << id << "\n";
-    cout << "  РљР»РёРµРЅС‚: " << (client ? client->getName() : "???") << "\n";
-    cout << "  Р”Р°С‚Р°: " << order->getDate() << "\n";
-    cout << "  РЎС‚Р°С‚СѓСЃ: " << order->getStatusString() << "\n";
-    cout << "  РЎСѓРјРјР°: " << fixed << setprecision(2) << order->getTotalCost() << " BYN\n";
+    cout << "\n  Заявка #" << id << "\n";
+    cout << "  Клиент: " << (client ? client->getName() : "???") << "\n";
+    cout << "  Дата: " << order->getDate() << "\n";
+    cout << "  Статус: " << order->getStatusString() << "\n";
+    cout << "  Сумма: " << fixed << setprecision(2) << order->getTotalCost() << " BYN\n";
 
-    if (confirm("\n  РџРѕРґС‚РІРµСЂРґРёС‚Рµ СѓРґР°Р»РµРЅРёРµ")) {
+    if (confirm("\n  Подтвердите удаление")) {
         dm.deleteOrder(id);
         dm.saveAll();
-        cout << "\n  Р—Р°СЏРІРєР° СѓРґР°Р»РµРЅР°.\n";
+        cout << "\n  Заявка удалена.\n";
     }
     else {
-        cout << "\n  РћРїРµСЂР°С†РёСЏ РѕС‚РјРµРЅРµРЅР°.\n";
+        cout << "\n  Операция отменена.\n";
     }
     pause();
 }
 
 void ordersMenu() {
     while (true) {
-        showHeader("Р—РђРЇР’РљР РќРђ РћР‘РЎР›РЈР–РР’РђРќРР•");
-        cout << "  1. РџСЂРѕСЃРјРѕС‚СЂ РІСЃРµС… Р·Р°СЏРІРѕРє\n";
-        cout << "  2. РЎРѕР·РґР°С‚СЊ Р·Р°СЏРІРєСѓ\n";
-        cout << "  3. РР·РјРµРЅРёС‚СЊ СЃС‚Р°С‚СѓСЃ Р·Р°СЏРІРєРё\n";
-        cout << "  4. Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ Р·Р°СЏРІРєСѓ\n";
-        cout << "  5. РЈРґР°Р»РёС‚СЊ Р·Р°СЏРІРєСѓ\n";
+        showHeader("ЗАЯВКИ НА ОБСЛУЖИВАНИЕ");
+        cout << "  1. Просмотр всех заявок\n";
+        cout << "  2. Создать заявку\n";
+        cout << "  3. Изменить статус заявки\n";
+        cout << "  4. Редактировать заявку\n";
+        cout << "  5. Удалить заявку\n";
         cout << "  " << string(30, '-') << "\n";
-        cout << "  0. РќР°Р·Р°Рґ\n\n";
+        cout << "  0. Назад\n\n";
         
-        int choice = readInt("  Р’С‹Р±РµСЂРёС‚Рµ РїСѓРЅРєС‚ РјРµРЅСЋ: ", 0, 5);
+        int choice = readInt("  Выберите пункт меню: ", 0, 5);
         
         switch (choice) {
             case 1: showOrders(); break;
@@ -1003,34 +1000,34 @@ void ordersMenu() {
     }
 }
 
-// ====================== РџРћРРЎРљ Р Р¤РР›Р¬РўР РђР¦РРЇ ======================
+// ====================== ПОИСК И ФИЛЬТРАЦИЯ ======================
 
 void searchMenu() {
     while (true) {
-        showHeader("РџРћРРЎРљ Р Р¤РР›Р¬РўР РђР¦РРЇ");
-        cout << "  1. РџРѕРёСЃРє РїРѕ Р¤РРћ РєР»РёРµРЅС‚Р°\n";
-        cout << "  2. Р¤РёР»СЊС‚СЂ РїРѕ РґР°С‚Рµ\n";
-        cout << "  3. Р¤РёР»СЊС‚СЂ РїРѕ СЃС‚Р°С‚СѓСЃСѓ\n";
+        showHeader("ПОИСК И ФИЛЬТРАЦИЯ");
+        cout << "  1. Поиск по ФИО клиента\n";
+        cout << "  2. Фильтр по дате\n";
+        cout << "  3. Фильтр по статусу\n";
         cout << "  " << string(30, '-') << "\n";
-        cout << "  0. РќР°Р·Р°Рґ\n\n";
+        cout << "  0. Назад\n\n";
         
-        int choice = readInt("  Р’С‹Р±РµСЂРёС‚Рµ РїСѓРЅРєС‚ РјРµРЅСЋ: ", 0, 3);
+        int choice = readInt("  Выберите пункт меню: ", 0, 3);
         DataManager& dm = DataManager::getInstance();
         
         switch (choice) {
             case 1: {
-                string name = readLine("  Р’РІРµРґРёС‚Рµ Р¤РРћ РёР»Рё С‡Р°СЃС‚СЊ Р¤РРћ: ");
+                string name = readLine("  Введите ФИО или часть ФИО: ");
 
-                // 1. РќР°Р№С‚Рё РІСЃРµС… РєР»РёРµРЅС‚РѕРІ РїРѕ Р¤РРћ
+                // 1. Найти всех клиентов по ФИО
                 auto clients = dm.searchClientsByName(name);
 
                 if (clients.empty()) {
-                    cout << "\n  РљР»РёРµРЅС‚С‹ РЅРµ РЅР°Р№РґРµРЅС‹.\n";
+                    cout << "\n  Клиенты не найдены.\n";
                     pause();
                     break;
                 }
 
-                // 2. Р”Р»СЏ РєР°Р¶РґРѕРіРѕ РєР»РёРµРЅС‚Р° РЅР°Р№С‚Рё РµРіРѕ Р·Р°РєР°Р·С‹
+                // 2. Для каждого клиента найти его заказы
                 vector<ServiceOrder> foundOrders;
                 for (const auto& client : clients) {
                     auto clientOrders = dm.getOrdersByClientId(client.getId());
@@ -1040,19 +1037,19 @@ void searchMenu() {
                 }
 
                 cout << "\n  " << string(65, '-') << "\n";
-                cout << "  Р—РђРЇР’РљР РљР›РР•РќРўРћР’ РЎ Р¤РРћ: \"" << name << "\"\n";
+                cout << "  ЗАЯВКИ КЛИЕНТОВ С ФИО: \"" << name << "\"\n";
                 cout << "  " << string(65, '-') << "\n";
 
                 if (foundOrders.empty()) {
-                    cout << "  Р—Р°СЏРІРєРё РЅРµ РЅР°Р№РґРµРЅС‹.\n";
+                    cout << "  Заявки не найдены.\n";
                 }
                 else {
-                    cout << "  РќР°Р№РґРµРЅРѕ Р·Р°СЏРІРѕРє: " << foundOrders.size() << "\n\n";
+                    cout << "  Найдено заявок: " << foundOrders.size() << "\n\n";
                     cout << "  " << left << setw(5) << "ID"
-                        << setw(22) << "РљР»РёРµРЅС‚"
-                        << setw(12) << "Р”Р°С‚Р°"
-                        << setw(12) << "РЎС‚Р°С‚СѓСЃ"
-                        << "РЎСѓРјРјР°\n";
+                        << setw(22) << "Клиент"
+                        << setw(12) << "Дата"
+                        << setw(12) << "Статус"
+                        << "Сумма\n";
                     cout << "  " << string(60, '-') << "\n";
                     for (const auto& o : foundOrders) {
                         const Client* client = dm.findClientById(o.getClientId());
@@ -1069,12 +1066,12 @@ void searchMenu() {
                 break;
             }
             case 2: {
-                string date = readLine("  Р’РІРµРґРёС‚Рµ РґР°С‚Сѓ (Р”Р”.РњРњ.Р“Р“Р“Р“): ");
+                string date = readLine("  Введите дату (ДД.ММ.ГГГГ): ");
                 auto orders = dm.getOrdersByDate(date);
                 
-                cout << "\n  Р—Р°СЏРІРєРё РЅР° " << date << ":\n";
+                cout << "\n  Заявки на " << date << ":\n";
                 if (orders.empty()) {
-                    cout << "  Р—Р°СЏРІРєРё РЅРµ РЅР°Р№РґРµРЅС‹.\n";
+                    cout << "  Заявки не найдены.\n";
                 } else {
                     for (const auto& o : orders) {
                         cout << "  " << o.getInfo() << "\n";
@@ -1084,12 +1081,12 @@ void searchMenu() {
                 break;
             }
             case 3: {
-                cout << "  Р’С‹Р±РµСЂРёС‚Рµ СЃС‚Р°С‚СѓСЃ:\n";
-                cout << "  1. РќРѕРІР°СЏ\n";
-                cout << "  2. Р’ СЂР°Р±РѕС‚Рµ\n";
-                cout << "  3. Р’С‹РїРѕР»РЅРµРЅР°\n";
-                cout << "  4. Р’С‹РґР°РЅР°\n";
-                int statusChoice = readInt("  Р’Р°С€ РІС‹Р±РѕСЂ: ", 1, 4);
+                cout << "  Выберите статус:\n";
+                cout << "  1. Новая\n";
+                cout << "  2. В работе\n";
+                cout << "  3. Выполнена\n";
+                cout << "  4. Выдана\n";
+                int statusChoice = readInt("  Ваш выбор: ", 1, 4);
                 
                 OrderStatus status;
                 switch (statusChoice) {
@@ -1101,9 +1098,9 @@ void searchMenu() {
                 }
                 
                 auto orders = dm.getOrdersByStatus(status);
-                cout << "\n  Р РµР·СѓР»СЊС‚Р°С‚С‹:\n";
+                cout << "\n  Результаты:\n";
                 if (orders.empty()) {
-                    cout << "  Р—Р°СЏРІРєРё РЅРµ РЅР°Р№РґРµРЅС‹.\n";
+                    cout << "  Заявки не найдены.\n";
                 } else {
                     for (const auto& o : orders) {
                         cout << "  " << o.getInfo() << "\n";
@@ -1117,37 +1114,37 @@ void searchMenu() {
     }
 }
 
-// ====================== РћРўР§РЃРўР« ======================
+// ====================== ОТЧЁТЫ ======================
 
 void reportsMenu() {
     while (true) {
-        showHeader("РћРўР§РЃРўР«");
-        cout << "  1. РљРІРёС‚Р°РЅС†РёСЏ РЅР° РІС‹РїРѕР»РЅРµРЅРЅС‹Рµ СЂР°Р±РѕС‚С‹\n";
-        cout << "  2. РћС‚С‡С‘С‚ РїРѕ РІС‹СЂСѓС‡РєРµ Р·Р° РїРµСЂРёРѕРґ\n";
-        cout << "  3. РЎС‚Р°С‚РёСЃС‚РёРєР° РїРѕ РІРёРґР°Рј СЂР°Р±РѕС‚\n";
+        showHeader("ОТЧЁТЫ");
+        cout << "  1. Квитанция на выполненные работы\n";
+        cout << "  2. Отчёт по выручке за период\n";
+        cout << "  3. Статистика по видам работ\n";
         cout << "  " << string(30, '-') << "\n";
-        cout << "  0. РќР°Р·Р°Рґ\n\n";
+        cout << "  0. Назад\n\n";
         
-        int choice = readInt("  Р’С‹Р±РµСЂРёС‚Рµ РїСѓРЅРєС‚ РјРµРЅСЋ: ", 0, 3);
+        int choice = readInt("  Выберите пункт меню: ", 0, 3);
         
         switch (choice) {
             case 1: {
-                int orderId = readInt("  Р’РІРµРґРёС‚Рµ ID Р·Р°СЏРІРєРё: ");
+                int orderId = readInt("  Введите ID заявки: ");
                 string receipt = ReportGenerator::generateReceipt(orderId);
                 cout << receipt;
                 
-                if (confirm("\n  РЎРѕС…СЂР°РЅРёС‚СЊ РІ HTML?")) {
-                    string filename = "data/РљРІРёС‚Р°РЅС†РёСЏ_" + to_string(orderId) + ".html";
+                if (confirm("\n  Сохранить в HTML?")) {
+                    string filename = "data/Квитанция_" + to_string(orderId) + ".html";
                     if (ReportGenerator::saveReceiptToHtml(orderId, filename)) {
-                        cout << "  РЎРѕС…СЂР°РЅРµРЅРѕ РІ " << filename << "\n";
+                        cout << "  Сохранено в " << filename << "\n";
                     }
                 }
                 pause();
                 break;
             }
             case 2: {
-                string startDate = readLine("  РќР°С‡Р°Р»СЊРЅР°СЏ РґР°С‚Р° (Р”Р”.РњРњ.Р“Р“Р“Р“): ");
-                string endDate = readLine("  РљРѕРЅРµС‡РЅР°СЏ РґР°С‚Р° (Р”Р”.РњРњ.Р“Р“Р“Р“): ");
+                string startDate = readLine("  Начальная дата (ДД.ММ.ГГГГ): ");
+                string endDate = readLine("  Конечная дата (ДД.ММ.ГГГГ): ");
                 
                 string report = ReportGenerator::generateRevenueReport(startDate, endDate);
                 cout << report;
@@ -1155,8 +1152,8 @@ void reportsMenu() {
                 break;
             }
             case 3: {
-                string startDate = readLine("  РќР°С‡Р°Р»СЊРЅР°СЏ РґР°С‚Р° (Р”Р”.РњРњ.Р“Р“Р“Р“): ");
-                string endDate = readLine("  РљРѕРЅРµС‡РЅР°СЏ РґР°С‚Р° (Р”Р”.РњРњ.Р“Р“Р“Р“): ");
+                string startDate = readLine("  Начальная дата (ДД.ММ.ГГГГ): ");
+                string endDate = readLine("  Конечная дата (ДД.ММ.ГГГГ): ");
                 
                 string report = ReportGenerator::generateServiceStatistics(startDate, endDate);
                 cout << report;
@@ -1168,15 +1165,15 @@ void reportsMenu() {
     }
 }
 
-// ====================== РђР”РњРРќРРЎРўР РР РћР’РђРќРР• ======================
+// ====================== АДМИНИСТРИРОВАНИЕ ======================
 
 void servicesMenu() {
     while (true) {
-        showHeader("РЎРџР РђР’РћР§РќРРљ Р’РР”РћР’ Р РђР‘РћРў");
+        showHeader("СПРАВОЧНИК ВИДОВ РАБОТ");
         DataManager& dm = DataManager::getInstance();
         auto& services = dm.getServiceTypes();
         
-        cout << "  РўРµРєСѓС‰РёР№ РїСЂРµР№СЃРєСѓСЂР°РЅС‚:\n";
+        cout << "  Текущий прейскурант:\n";
         cout << "  " << string(55, '-') << "\n";
         for (const auto& s : services) {
             cout << "  " << left << setw(5) << s.getId()
@@ -1184,52 +1181,52 @@ void servicesMenu() {
                       << fixed << setprecision(2) << s.getPrice() << " BYN\n";
         }
         cout << "\n";
-        cout << "  1. Р”РѕР±Р°РІРёС‚СЊ РІРёРґ СЂР°Р±РѕС‚С‹\n";
-        cout << "  2. Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ\n";
-        cout << "  3. РЈРґР°Р»РёС‚СЊ\n";
+        cout << "  1. Добавить вид работы\n";
+        cout << "  2. Редактировать\n";
+        cout << "  3. Удалить\n";
         cout << "  " << string(30, '-') << "\n";
-        cout << "  0. РќР°Р·Р°Рґ\n\n";
+        cout << "  0. Назад\n\n";
         
-        int choice = readInt("  Р’С‹Р±РµСЂРёС‚Рµ РїСѓРЅРєС‚ РјРµРЅСЋ: ", 0, 3);
+        int choice = readInt("  Выберите пункт меню: ", 0, 3);
         
         switch (choice) {
             case 1: {
-                string name = readLine("  РќР°РёРјРµРЅРѕРІР°РЅРёРµ: ");
+                string name = readLine("  Наименование: ");
                 if (name.empty()) {
-                    cout << "  РћРЁРР‘РљРђ: РќР°РёРјРµРЅРѕРІР°РЅРёРµ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј!\n";
+                    cout << "  ОШИБКА: Наименование не может быть пустым!\n";
                     pause();
                     break;
                 }
-                double price = readDouble("  Р¦РµРЅР° (BYN): ");
+                double price = readDouble("  Цена (BYN): ");
                 
                 int newId = ServiceType::getNextId();
                 ServiceType service(newId, name, price);
                 dm.addServiceType(service);
                 dm.saveAll();
                 
-                cout << "  Р”РѕР±Р°РІР»РµРЅРѕ! ID: " << newId << "\n";
+                cout << "  Добавлено! ID: " << newId << "\n";
                 pause();
                 break;
             }
             case 2: {
-                int id = readInt("  Р’РІРµРґРёС‚Рµ ID РІРёРґР° СЂР°Р±РѕС‚С‹: ");
+                int id = readInt("  Введите ID вида работы: ");
                 const ServiceType* service = dm.findServiceTypeById(id);
                 
                 if (!service) {
-                    cout << "  РћРЁРР‘РљРђ: Р’РёРґ СЂР°Р±РѕС‚С‹ РЅРµ РЅР°Р№РґРµРЅ!\n";
+                    cout << "  ОШИБКА: Вид работы не найден!\n";
                     pause();
                     break;
                 }
                 
-                cout << "\n  РўРµРєСѓС‰РёРµ РґР°РЅРЅС‹Рµ:\n";
-                cout << "  РќР°РёРјРµРЅРѕРІР°РЅРёРµ: " << service->getName() << "\n";
-                cout << "  Р¦РµРЅР°: " << fixed << setprecision(2) 
+                cout << "\n  Текущие данные:\n";
+                cout << "  Наименование: " << service->getName() << "\n";
+                cout << "  Цена: " << fixed << setprecision(2) 
                           << service->getPrice() << " BYN\n\n";
                 
-                cout << "  Р’РІРµРґРёС‚Рµ РЅРѕРІС‹Рµ РґР°РЅРЅС‹Рµ (Enter - РѕСЃС‚Р°РІРёС‚СЊ Р±РµР· РёР·РјРµРЅРµРЅРёР№):\n";
+                cout << "  Введите новые данные (Enter - оставить без изменений):\n";
                 
-                string name = readLine("  РќР°РёРјРµРЅРѕРІР°РЅРёРµ: ");
-                string priceStr = readLine("  Р¦РµРЅР° (BYN): ");
+                string name = readLine("  Наименование: ");
+                string priceStr = readLine("  Цена (BYN): ");
                 
                 ServiceType updated = *service;
                 if (!name.empty()) updated.setName(name);
@@ -1238,30 +1235,30 @@ void servicesMenu() {
                 dm.updateServiceType(id, updated);
                 dm.saveAll();
                 
-                cout << "\n  Р”Р°РЅРЅС‹Рµ РѕР±РЅРѕРІР»РµРЅС‹!\n";
+                cout << "\n  Данные обновлены!\n";
                 pause();
                 break;
             }
             case 3: {
-                int id = readInt("  Р’РІРµРґРёС‚Рµ ID РІРёРґР° СЂР°Р±РѕС‚С‹: ");
+                int id = readInt("  Введите ID вида работы: ");
                 const ServiceType* service = dm.findServiceTypeById(id);
                 
                 if (!service) {
-                    cout << "  РћРЁРР‘РљРђ: Р’РёРґ СЂР°Р±РѕС‚С‹ РЅРµ РЅР°Р№РґРµРЅ!\n";
+                    cout << "  ОШИБКА: Вид работы не найден!\n";
                     pause();
                     break;
                 }
                 
-                cout << "\n  Р’РёРґ СЂР°Р±РѕС‚С‹: " << service->getName() << "\n";
-                cout << "  Р¦РµРЅР°: " << fixed << setprecision(2) 
+                cout << "\n  Вид работы: " << service->getName() << "\n";
+                cout << "  Цена: " << fixed << setprecision(2) 
                           << service->getPrice() << " BYN\n";
                 
-                if (confirm("\n  РџРѕРґС‚РІРµСЂРґРёС‚Рµ СѓРґР°Р»РµРЅРёРµ")) {
+                if (confirm("\n  Подтвердите удаление")) {
                     dm.deleteServiceType(id);
                     dm.saveAll();
-                    cout << "\n  Р’РёРґ СЂР°Р±РѕС‚С‹ СѓРґР°Р»С‘РЅ.\n";
+                    cout << "\n  Вид работы удалён.\n";
                 } else {
-                    cout << "\n  РћРїРµСЂР°С†РёСЏ РѕС‚РјРµРЅРµРЅР°.\n";
+                    cout << "\n  Операция отменена.\n";
                 }
                 pause();
                 break;
@@ -1273,11 +1270,11 @@ void servicesMenu() {
 
 void usersMenu() {
     while (true) {
-        showHeader("РЈРџР РђР’Р›Р•РќРР• РџРћР›Р¬Р—РћР’РђРўР•Р›РЇРњР");
+        showHeader("УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ");
         DataManager& dm = DataManager::getInstance();
         auto& users = dm.getUsers();
         
-        cout << "  РЎРїРёСЃРѕРє РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№:\n";
+        cout << "  Список пользователей:\n";
         cout << "  " << string(58, '-') << "\n";
         for (const auto& u : users) {
             
@@ -1287,31 +1284,31 @@ void usersMenu() {
                       << u.getRoleString() << "\n";
         }
         cout << "\n";
-        cout << "  1. Р”РѕР±Р°РІРёС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ\n";
-        cout << "  2. РР·РјРµРЅРёС‚СЊ РїР°СЂРѕР»СЊ\n";
-        cout << "  3. РЈРґР°Р»РёС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ\n";
+        cout << "  1. Добавить пользователя\n";
+        cout << "  2. Изменить пароль\n";
+        cout << "  3. Удалить пользователя\n";
         cout << "  " << string(30, '-') << "\n";
-        cout << "  0. РќР°Р·Р°Рґ\n\n";
+        cout << "  0. Назад\n\n";
         
-        int choice = readInt("  Р’С‹Р±РµСЂРёС‚Рµ РїСѓРЅРєС‚ РјРµРЅСЋ: ", 0, 3);
+        int choice = readInt("  Выберите пункт меню: ", 0, 3);
         
         switch (choice) {
             case 1: {
-                string name = readLine("  Р¤РРћ: ");
-                string phone = readLine("  РўРµР»РµС„РѕРЅ: ");
-                string login = readLine("  Р›РѕРіРёРЅ: ");
-                string password = readPassword("  РџР°СЂРѕР»СЊ: ");
-                string password2 = readPassword("  РџРѕРІС‚РѕСЂРёС‚Рµ РІРІРѕРґ РџР°СЂРѕР»СЏ: ");
+                string name = readLine("  ФИО: ");
+                string phone = readLine("  Телефон: ");
+                string login = readLine("  Логин: ");
+                string password = readPassword("  Пароль: ");
+                string password2 = readPassword("  Повторите ввод Пароля: ");
                 if (password != password2) {
-                    cout << "  РџР°СЂРѕР»Рё РЅРµ СЃРѕРІРїР°Р»Рё. ";
-                    password2 = readPassword("  РџРѕРІС‚РѕСЂРёС‚Рµ РІРІРѕРґ РџР°СЂРѕР»СЏ: ");
+                    cout << "  Пароли не совпали. ";
+                    password2 = readPassword("  Повторите ввод Пароля: ");
                     if (password != password2) {
-                        cout << "  РџР°СЂРѕР»Рё РЅРµ СЃРѕРІРїР°Р»Рё. РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РґРѕР±Р°РІР»РµРЅ!\n";
+                        cout << "  Пароли не совпали. Пользователь не добавлен!\n";
                         pause();
                         return;
                     }
                 }
-                cout << "  Р РѕР»СЊ (1 - РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ, 2 - РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ): ";
+                cout << "  Роль (1 - Пользователь, 2 - Администратор): ";
                 int roleChoice = readInt("", 1, 2);
                 UserRole role = (roleChoice == 2) ? UserRole::ROLE_ADMIN : UserRole::ROLE_USER;
                 
@@ -1320,32 +1317,32 @@ void usersMenu() {
                 dm.addUser(user);
                 dm.saveAll();
                 
-                cout << "  РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РґРѕР±Р°РІР»РµРЅ!\n";
+                cout << "  Пользователь добавлен!\n";
                 pause();
                 break;
             }
             case 2: { 
-                int id = readInt("  Р’РІРµРґРёС‚Рµ ID РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: ");
+                int id = readInt("  Введите ID пользователя: ");
                 const User* u = dm.findUserById(id);
 
                 if (!u) {
-                    cout << "  РћРЁРР‘РљРђ: РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ!\n";
+                    cout << "  ОШИБКА: Пользователь не найден!\n";
                     pause();
                     break;
                 }
-                cout << "\n  РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ:";
+                cout << "\n  Пользователь:";
                 cout << "  " << u->getId()
                     << "  " << u->getName()
                     << "  " << u->getLogin()
                     << "  (" << u->getRoleString() << ")\n";
 
-                string password = readPassword("  РќРѕРІС‹Р№ РџР°СЂРѕР»СЊ: ");
-                string password2 = readPassword("  РџРѕРІС‚РѕСЂРёС‚Рµ РІРІРѕРґ РџР°СЂРѕР»СЏ: ");
+                string password = readPassword("  Новый Пароль: ");
+                string password2 = readPassword("  Повторите ввод Пароля: ");
                 if (password != password2) {
-                    cout << "  РџР°СЂРѕР»Рё РЅРµ СЃРѕРІРїР°Р»Рё. ";
-                    password2 = readPassword("  РџРѕРІС‚РѕСЂРёС‚Рµ РІРІРѕРґ РџР°СЂРѕР»СЏ: ");
+                    cout << "  Пароли не совпали. ";
+                    password2 = readPassword("  Повторите ввод Пароля: ");
                     if (password != password2) {
-                        cout << "  РџР°СЂРѕР»Рё РЅРµ СЃРѕРІРїР°Р»Рё. РџР°СЂРѕР»СЊ РЅРµ РёР·РјРµРЅРµРЅ!\n";
+                        cout << "  Пароли не совпали. Пароль не изменен!\n";
                         pause();
                         return;
                     }
@@ -1356,32 +1353,32 @@ void usersMenu() {
                 dm.updateUser(id, updated);
                 dm.saveAll();
 
-                cout << "\n  РџР°СЂРѕР»СЊ РёР·РјРµРЅРµРЅ!\n";
+                cout << "\n  Пароль изменен!\n";
                 pause();
                 break;
             }
             case 3: {
-                int id = readInt("  Р’РІРµРґРёС‚Рµ ID РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: ");
+                int id = readInt("  Введите ID пользователя: ");
                 const User* u = dm.findUserById(id);
 
                 if (!u) {
-                    cout << "  РћРЁРР‘РљРђ: РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ!\n";
+                    cout << "  ОШИБКА: Пользователь не найден!\n";
                     pause();
                     break;
                 }
 
-                cout << "\n  РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ:";
+                cout << "\n  Пользователь:";
                 cout << "  " << u->getId()
                     << "  " << u->getName()
                     << "  " << u->getLogin()
                     << "  (" << u->getRoleString() << ")\n";
-                if (confirm("\n  РџРѕРґС‚РІРµСЂРґРёС‚Рµ СѓРґР°Р»РµРЅРёРµ")) {
+                if (confirm("\n  Подтвердите удаление")) {
                     dm.deleteUser(id);
                     dm.saveAll();
-                    cout << "\n  РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СѓРґР°Р»С‘РЅ.\n";
+                    cout << "\n  Пользователь удалён.\n";
                 }
                 else {
-                    cout << "\n  РћРїРµСЂР°С†РёСЏ РѕС‚РјРµРЅРµРЅР°.\n";
+                    cout << "\n  Операция отменена.\n";
                 }
                 pause();
                 break;
@@ -1390,7 +1387,7 @@ void usersMenu() {
                 return;
                 break;
             default:
-                cout << "  Р¤СѓРЅРєС†РёСЏ РІ СЂР°Р·СЂР°Р±РѕС‚РєРµ\n";
+                cout << "  Функция в разработке\n";
                 pause();
                 return;
                 break;
@@ -1400,18 +1397,18 @@ void usersMenu() {
 
 
 
-// ====================== Р РђР‘РћРўРђ РЎ РЎРћРўР РЈР”РќРРљРђРњР ======================
+// ====================== РАБОТА С СОТРУДНИКАМИ ======================
 
 void showEmployees() {
-    showHeader("РЎРџРРЎРћРљ РЎРћРўР РЈР”РќРРљРћР’");
+    showHeader("СПИСОК СОТРУДНИКОВ");
     DataManager& dm = DataManager::getInstance();
     auto& employees = dm.getEmployees();
     
     if (employees.empty()) {
-        cout << "  РЎРїРёСЃРѕРє СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ РїСѓСЃС‚.\n";
+        cout << "  Список сотрудников пуст.\n";
     } else {
-        cout << "  " << left << setw(5) << "ID" << setw(30) << "Р¤РРћ"
-             << setw(18) << "РўРµР»РµС„РѕРЅ" << "Р”РѕР»Р¶РЅРѕСЃС‚СЊ\n";
+        cout << "  " << left << setw(5) << "ID" << setw(30) << "ФИО"
+             << setw(18) << "Телефон" << "Должность\n";
         cout << "  " << string(70, '-') << "\n";
         for (const auto& e : employees) {
             cout << "  " << left << setw(5) << e.getId() << setw(30) << e.getName()
@@ -1422,58 +1419,58 @@ void showEmployees() {
 }
 
 void addEmployee() {
-    showHeader("Р”РћР‘РђР’Р›Р•РќРР• РЎРћРўР РЈР”РќРРљРђ");
+    showHeader("ДОБАВЛЕНИЕ СОТРУДНИКА");
     DataManager& dm = DataManager::getInstance();
     
-    string name = readLine("  Р¤РРћ: ");
-    string phone = readLine("  РўРµР»РµС„РѕРЅ: ");
-    string position = readLine("  Р”РѕР»Р¶РЅРѕСЃС‚СЊ: ");
+    string name = readLine("  ФИО: ");
+    string phone = readLine("  Телефон: ");
+    string position = readLine("  Должность: ");
     
     int newId = Person::getNextId();
     Employee employee(newId, name, phone, position);
     dm.addEmployee(employee);
     dm.saveAll();
     
-    cout << "\n  РЎРѕС‚СЂСѓРґРЅРёРє РґРѕР±Р°РІР»РµРЅ! ID: " << newId << "\n";
+    cout << "\n  Сотрудник добавлен! ID: " << newId << "\n";
     pause();
 }
 
 void editEmployee() {
-    showHeader("Р Р•Р”РђРљРўРР РћР’РђРќРР• РЎРћРўР РЈР”РќРРљРђ");
+    showHeader("РЕДАКТИРОВАНИЕ СОТРУДНИКА");
     DataManager& dm = DataManager::getInstance();
     
     auto& employees = dm.getEmployees();
     if (employees.empty()) {
-        cout << "  РЎРїРёСЃРѕРє СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ РїСѓСЃС‚.\n";
+        cout << "  Список сотрудников пуст.\n";
         pause();
         return;
     }
     
-    cout << "  РЎРїРёСЃРѕРє СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ:\n";
+    cout << "  Список сотрудников:\n";
     for (const auto& e : employees) {
         cout << "  " << e.getId() << ". " << e.getName() << " (" << e.getPosition() << ")\n";
     }
     cout << "\n";
     
-    int id = readInt("  Р’РІРµРґРёС‚Рµ ID СЃРѕС‚СЂСѓРґРЅРёРєР°: ");
+    int id = readInt("  Введите ID сотрудника: ");
     const Employee* employee = dm.findEmployeeById(id);
     
     if (!employee) {
-        cout << "  РћРЁРР‘РљРђ: РЎРѕС‚СЂСѓРґРЅРёРє РЅРµ РЅР°Р№РґРµРЅ!\n";
+        cout << "  ОШИБКА: Сотрудник не найден!\n";
         pause();
         return;
     }
     
-    cout << "\n  РўРµРєСѓС‰РёРµ РґР°РЅРЅС‹Рµ:\n";
-    cout << "  Р¤РРћ: " << employee->getName() << "\n";
-    cout << "  РўРµР»РµС„РѕРЅ: " << employee->getPhone() << "\n";
-    cout << "  Р”РѕР»Р¶РЅРѕСЃС‚СЊ: " << employee->getPosition() << "\n\n";
+    cout << "\n  Текущие данные:\n";
+    cout << "  ФИО: " << employee->getName() << "\n";
+    cout << "  Телефон: " << employee->getPhone() << "\n";
+    cout << "  Должность: " << employee->getPosition() << "\n\n";
     
-    cout << "  Р’РІРµРґРёС‚Рµ РЅРѕРІС‹Рµ РґР°РЅРЅС‹Рµ (Enter - РѕСЃС‚Р°РІРёС‚СЊ Р±РµР· РёР·РјРµРЅРµРЅРёР№):\n";
+    cout << "  Введите новые данные (Enter - оставить без изменений):\n";
     
-    string name = readLine("  Р¤РРћ: ");
-    string phone = readLine("  РўРµР»РµС„РѕРЅ: ");
-    string position = readLine("  Р”РѕР»Р¶РЅРѕСЃС‚СЊ: ");
+    string name = readLine("  ФИО: ");
+    string phone = readLine("  Телефон: ");
+    string position = readLine("  Должность: ");
     
     Employee updated = *employee;
     if (!name.empty()) updated.setName(name);
@@ -1483,61 +1480,61 @@ void editEmployee() {
     dm.updateEmployee(id, updated);
     dm.saveAll();
     
-    cout << "\n  Р”Р°РЅРЅС‹Рµ СЃРѕС‚СЂСѓРґРЅРёРєР° РѕР±РЅРѕРІР»РµРЅС‹!\n";
+    cout << "\n  Данные сотрудника обновлены!\n";
     pause();
 }
 
 void deleteEmployee() {
-    showHeader("РЈР”РђР›Р•РќРР• РЎРћРўР РЈР”РќРРљРђ");
+    showHeader("УДАЛЕНИЕ СОТРУДНИКА");
     DataManager& dm = DataManager::getInstance();
     
     auto& employees = dm.getEmployees();
     if (employees.empty()) {
-        cout << "  РЎРїРёСЃРѕРє СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ РїСѓСЃС‚.\n";
+        cout << "  Список сотрудников пуст.\n";
         pause();
         return;
     }
     
-    cout << "  РЎРїРёСЃРѕРє СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ:\n";
+    cout << "  Список сотрудников:\n";
     for (const auto& e : employees) {
         cout << "  " << e.getId() << ". " << e.getName() << " (" << e.getPosition() << ")\n";
     }
     cout << "\n";
     
-    int id = readInt("  Р’РІРµРґРёС‚Рµ ID СЃРѕС‚СЂСѓРґРЅРёРєР°: ");
+    int id = readInt("  Введите ID сотрудника: ");
     const Employee* employee = dm.findEmployeeById(id);
     
     if (!employee) {
-        cout << "  РћРЁРР‘РљРђ: РЎРѕС‚СЂСѓРґРЅРёРє РЅРµ РЅР°Р№РґРµРЅ!\n";
+        cout << "  ОШИБКА: Сотрудник не найден!\n";
         pause();
         return;
     }
     
-    cout << "\n  РЎРѕС‚СЂСѓРґРЅРёРє: " << employee->getName() << "\n";
-    cout << "  Р”РѕР»Р¶РЅРѕСЃС‚СЊ: " << employee->getPosition() << "\n";
-    cout << "  Р’РќРРњРђРќРР•: Р‘СѓРґСѓС‚ СѓРґР°Р»РµРЅС‹ РІСЃРµ СЃРІСЏР·Р°РЅРЅС‹Рµ Р·Р°СЏРІРєРё!\n\n";
+    cout << "\n  Сотрудник: " << employee->getName() << "\n";
+    cout << "  Должность: " << employee->getPosition() << "\n";
+    cout << "  ВНИМАНИЕ: Будут удалены все связанные заявки!\n\n";
     
-    if (confirm("  РџРѕРґС‚РІРµСЂРґРёС‚Рµ СѓРґР°Р»РµРЅРёРµ")) {
+    if (confirm("  Подтвердите удаление")) {
         dm.deleteEmployee(id);
         dm.saveAll();
-        cout << "\n  РЎРѕС‚СЂСѓРґРЅРёРє СѓРґР°Р»С‘РЅ.\n";
+        cout << "\n  Сотрудник удалён.\n";
     } else {
-        cout << "\n  РћРїРµСЂР°С†РёСЏ РѕС‚РјРµРЅРµРЅР°.\n";
+        cout << "\n  Операция отменена.\n";
     }
     pause();
 }
 
 void employeesMenu() {
     while (true) {
-        showHeader("РЎРћРўР РЈР”РќРРљР");
-        cout << "  1. РџСЂРѕСЃРјРѕС‚СЂ РІСЃРµС… СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ\n";
-        cout << "  2. Р”РѕР±Р°РІРёС‚СЊ СЃРѕС‚СЂСѓРґРЅРёРєР°\n";
-        cout << "  3. Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ СЃРѕС‚СЂСѓРґРЅРёРєР°\n";
-        cout << "  4. РЈРґР°Р»РёС‚СЊ СЃРѕС‚СЂСѓРґРЅРёРєР°\n";
+        showHeader("СОТРУДНИКИ");
+        cout << "  1. Просмотр всех сотрудников\n";
+        cout << "  2. Добавить сотрудника\n";
+        cout << "  3. Редактировать сотрудника\n";
+        cout << "  4. Удалить сотрудника\n";
         cout << "  " << string(30, '-') << "\n";
-        cout << "  0. РќР°Р·Р°Рґ\n\n";
+        cout << "  0. Назад\n\n";
         
-        int choice = readInt("  Р’С‹Р±РµСЂРёС‚Рµ РїСѓРЅРєС‚ РјРµРЅСЋ: ", 0, 4);
+        int choice = readInt("  Выберите пункт меню: ", 0, 4);
         
         switch (choice) {
             case 1: showEmployees(); break;
@@ -1549,30 +1546,30 @@ void employeesMenu() {
     }
 }
 
-// ====================== Р“Р›РђР’РќРћР• РњР•РќР® ======================
+// ====================== ГЛАВНОЕ МЕНЮ ======================
 
 void mainMenu() {
     while (true) {
-        showHeader("Р“Р›РђР’РќРћР• РњР•РќР®");
+        showHeader("ГЛАВНОЕ МЕНЮ");
         
-        cout << "  1. РљР»РёРµРЅС‚С‹\n";
-        cout << "  2. РђРІС‚РѕРјРѕР±РёР»Рё\n";
-        cout << "  3. Р—Р°СЏРІРєРё РЅР° РѕР±СЃР»СѓР¶РёРІР°РЅРёРµ\n";
-        cout << "  4. РџРѕРёСЃРє Рё С„РёР»СЊС‚СЂР°С†РёСЏ\n";
-        cout << "  5. РћС‚С‡С‘С‚С‹\n";
+        cout << "  1. Клиенты\n";
+        cout << "  2. Автомобили\n";
+        cout << "  3. Заявки на обслуживание\n";
+        cout << "  4. Поиск и фильтрация\n";
+        cout << "  5. Отчёты\n";
         
-        if (currentUserId != -1 && DataManager::getInstance().findUserById(currentUserId) && DataManager::getInstance().findUserById(currentUserId)->getRole() == UserRole::ROLE_ADMIN) {
+        if (currentUser && currentUser->getRole() == UserRole::ROLE_ADMIN) {
             cout << "  " << string(30, '-') << "\n";
-            cout << "  6. РЎРїСЂР°РІРѕС‡РЅРёРє РІРёРґРѕРІ СЂР°Р±РѕС‚\n";
-            cout << "  7. РЎРѕС‚СЂСѓРґРЅРёРєРё\n";
-            cout << "  8. РЈРїСЂР°РІР»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРјРё\n";
+            cout << "  6. Справочник видов работ\n";
+            cout << "  7. Сотрудники\n";
+            cout << "  8. Управление пользователями\n";
         }
         
         cout << "  " << string(30, '-') << "\n";
-        cout << "  0. Р’С‹С…РѕРґ РёР· СЃРёСЃС‚РµРјС‹\n\n";
+        cout << "  0. Выход из системы\n\n";
         
-        int maxChoice = (currentUserId != -1 && DataManager::getInstance().findUserById(currentUserId) && DataManager::getInstance().findUserById(currentUserId)->getRole() == UserRole::ROLE_ADMIN) ? 8 : 5;
-        int choice = readInt("  Р’С‹Р±РµСЂРёС‚Рµ РїСѓРЅРєС‚ РјРµРЅСЋ: ", 0, maxChoice);
+        int maxChoice = (currentUser && currentUser->getRole() == UserRole::ROLE_ADMIN) ? 8 : 5;
+        int choice = readInt("  Выберите пункт меню: ", 0, maxChoice);
         
         switch (choice) {
             case 1: clientsMenu(); break;
@@ -1581,47 +1578,47 @@ void mainMenu() {
             case 4: searchMenu(); break;
             case 5: reportsMenu(); break;
             case 6: 
-                if (currentUserId != -1 && DataManager::getInstance().findUserById(currentUserId) && DataManager::getInstance().findUserById(currentUserId)->getRole() == UserRole::ROLE_ADMIN) {
+                if (currentUser && currentUser->getRole() == UserRole::ROLE_ADMIN) {
                     servicesMenu(); 
                 }
                 break;
             case 7:
-                if (currentUserId != -1 && DataManager::getInstance().findUserById(currentUserId) && DataManager::getInstance().findUserById(currentUserId)->getRole() == UserRole::ROLE_ADMIN) {
+                if (currentUser && currentUser->getRole() == UserRole::ROLE_ADMIN) {
                     employeesMenu();
                 }
                 break;
             case 8:
-                if (currentUserId != -1 && DataManager::getInstance().findUserById(currentUserId) && DataManager::getInstance().findUserById(currentUserId)->getRole() == UserRole::ROLE_ADMIN) {
+                if (currentUser && currentUser->getRole() == UserRole::ROLE_ADMIN) {
                     usersMenu();
                 }
                 break;
             case 0:
-                //if (confirm("  Р’С‹Р№С‚Рё РёР· СЃРёСЃС‚РµРјС‹?")) {
+                //if (confirm("  Выйти из системы?")) {
                 DataManager::getInstance().saveAll();
-                currentUserId = -1;
+                currentUser = nullptr;
                 return;
                 break;
         }
     }
 }
 
-// ====================== РўРћР§РљРђ Р’РҐРћР”Рђ ======================
+// ====================== ТОЧКА ВХОДА ======================
 
 int main() {
     setupConsole();
     
-    // Р—Р°РіСЂСѓР·РєР° РґР°РЅРЅС‹С…
+    // Загрузка данных
     DataManager& dm = DataManager::getInstance();
     dm.loadAll();
     
-    // РђРІС‚РѕСЂРёР·Р°С†РёСЏ
+    // Авторизация
     if (login()) {
         mainMenu();
     }
     
-    // РЎРѕС…СЂР°РЅРµРЅРёРµ РґР°РЅРЅС‹С… РїСЂРё РІС‹С…РѕРґРµ
+    // Сохранение данных при выходе
     dm.saveAll();
     
-    //cout << "\n  РЎРїР°СЃРёР±Рѕ Р·Р° СЂР°Р±РѕС‚Сѓ!\n\n";
+    //cout << "\n  Спасибо за работу!\n\n";
     return 0;
 }

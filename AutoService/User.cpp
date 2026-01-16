@@ -1,7 +1,7 @@
 #include "../include/User.h"
 #include <sstream>
 
-// Простая функция хэширования (для учебных целей)
+// Р¤СѓРЅРєС†РёСЏ С…СЌС€РёСЂРѕРІР°РЅРёСЏ
 string User::hashPassword(const string& password) {
     hash<string> hasher;
     size_t hash = hasher(password);
@@ -10,28 +10,28 @@ string User::hashPassword(const string& password) {
     return oss.str();
 }
 
-// Конструктор по умолчанию
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 User::User() : Person(), login(""), passwordHash(""), role(UserRole::ROLE_USER) {}
 
-// Параметризованный конструктор
+// РџР°СЂР°РјРµС‚СЂРёР·РѕРІР°РЅРЅС‹Р№ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ
 User::User(int id, const string& name, const string& phone,
            const string& login, const string& password, UserRole role)
     : Person(id, name, phone), login(login), role(role) {
     passwordHash = hashPassword(password);
 }
 
-// Конструктор для десериализации
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РґР»СЏ РґРµСЃРµСЂРёР°Р»РёР·Р°С†РёРё
 User::User(int id, const string& name, const string& phone,
            const string& login, const string& passwordHash,
            UserRole role, bool isHashed)
     : Person(id, name, phone), login(login), passwordHash(passwordHash), role(role) {}
 
-// Конструктор копирования
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РєРѕРїРёСЂРѕРІР°РЅРёСЏ
 User::User(const User& other)
     : Person(other), login(other.login), 
       passwordHash(other.passwordHash), role(other.role) {}
 
-// Оператор присваивания
+// РћРїРµСЂР°С‚РѕСЂ РїСЂРёСЃРІР°РёРІР°РЅРёСЏ
 User& User::operator=(const User& other) {
     if (this != &other) {
         Person::operator=(other);
@@ -42,10 +42,10 @@ User& User::operator=(const User& other) {
     return *this;
 }
 
-// Деструктор
+// Р”РµСЃС‚СЂСѓРєС‚РѕСЂ
 User::~User() {}
 
-// Геттеры
+// Р“РµС‚С‚РµСЂС‹
 string User::getLogin() const {
     return login;
 }
@@ -58,7 +58,7 @@ string User::getRoleString() const {
     return roleToString(role);
 }
 
-// Сеттеры
+// РЎРµС‚С‚РµСЂС‹
 void User::setLogin(const string& login) {
     this->login = login;
 }
@@ -71,19 +71,19 @@ void User::setRole(UserRole role) {
     this->role = role;
 }
 
-// Проверка пароля
+// РџСЂРѕРІРµСЂРєР° РїР°СЂРѕР»СЏ
 bool User::checkPassword(const string& password) const {
     return passwordHash == hashPassword(password);
 }
 
-// Переопределение виртуального метода getInfo()
+// РџРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёРµ РІРёСЂС‚СѓР°Р»СЊРЅРѕРіРѕ РјРµС‚РѕРґР° getInfo()
 string User::getInfo() const {
     ostringstream oss;
-    oss << "Пользователь: " << name << " (" << login << "), Роль: " << getRoleString();
+    oss << "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ: " << name << " (" << login << "), Р РѕР»СЊ: " << getRoleString();
     return oss.str();
 }
 
-// Сериализация в строку
+// РЎРµСЂРёР°Р»РёР·Р°С†РёСЏ РІ СЃС‚СЂРѕРєСѓ
 string User::serialize() const {
     ostringstream oss;
     oss << id << ";" << name << ";" << phone << ";" 
@@ -91,7 +91,7 @@ string User::serialize() const {
     return oss.str();
 }
 
-// Статический метод десериализации
+// РЎС‚Р°С‚РёС‡РµСЃРєРёР№ РјРµС‚РѕРґ РґРµСЃРµСЂРёР°Р»РёР·Р°С†РёРё
 User User::deserialize(const string& data) {
     istringstream iss(data);
     string token;
@@ -113,22 +113,22 @@ User User::deserialize(const string& data) {
     return User(id, name, phone, login, passwordHash, role, true);
 }
 
-// Преобразование строки в роль
+// РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ СЃС‚СЂРѕРєРё РІ СЂРѕР»СЊ
 UserRole User::stringToRole(const string& roleStr) {
-    if (roleStr == "ROLE_ADMIN" || roleStr == "Администратор") {
+    if (roleStr == "ROLE_ADMIN" || roleStr == "РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ") {
         return UserRole::ROLE_ADMIN;
     }
     return UserRole::ROLE_USER;
 }
 
-// Преобразование роли в строку
+// РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ СЂРѕР»Рё РІ СЃС‚СЂРѕРєСѓ
 string User::roleToString(UserRole role) {
     switch (role) {
         case UserRole::ROLE_ADMIN:
-            return "Администратор";
+            return "РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ";
         case UserRole::ROLE_USER:
-            return "Пользователь";
+            return "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ";
         default:
-            return "Неизвестно";
+            return "РќРµРёР·РІРµСЃС‚РЅРѕ";
     }
 }

@@ -2,10 +2,10 @@
 #include <fstream>
 #include <algorithm>
 #include <iostream>
-#include <direct.h> // для _mkdir
+#include <direct.h> // РґР»СЏ _mkdir
 #include <sys/stat.h>
 
-// Приватный конструктор
+// РџСЂРёРІР°С‚РЅС‹Р№ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ
 DataManager::DataManager() {
     dataPath = "data/";
     clientsFile = dataPath + "clients.dat";
@@ -16,54 +16,61 @@ DataManager::DataManager() {
     ordersFile = dataPath + "orders.dat";
 }
 
-// Получение единственного экземпляра (Singleton)
+// РџРѕР»СѓС‡РµРЅРёРµ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРіРѕ СЌРєР·РµРјРїР»СЏСЂР° (Singleton)
 DataManager& DataManager::getInstance() {
     static DataManager instance;
     return instance;
 }
 
-// Инициализация данных по умолчанию
+// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РґР°РЅРЅС‹С… РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 void DataManager::initDefaultData() {
-    // Создаём пользователей по умолчанию
+    // РЎРѕР·РґР°С‘Рј РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
     if (users.empty()) {
-        users.push_back(User(User::getNextId(), "Администратор", "+375291111111",
+        users.push_back(User(User::getNextId(), "РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ", "+375291111111",
                             "admin", "admin123", UserRole::ROLE_ADMIN));
-        users.push_back(User(User::getNextId(), "Пользователь", "+375292222222",
+        users.push_back(User(User::getNextId(), "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ", "+375292222222",
                             "user", "user123", UserRole::ROLE_USER));
     }
     
-    // Создаём виды работ по умолчанию
+    // РЎРѕР·РґР°С‘Рј РІРёРґС‹ СЂР°Р±РѕС‚ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
     if (serviceTypes.empty()) {
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Замена моторного масла", 45.00));
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Замена масляного фильтра", 15.00));
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Замена воздушного фильтра", 25.00));
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Замена салонного фильтра", 20.00));
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Диагностика двигателя", 80.00));
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Диагностика ходовой части", 60.00));
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Замена передних тормозных колодок", 120.00));
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Замена задних тормозных колодок", 110.00));
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Шиномонтаж (4 колеса)", 40.00));
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Балансировка колёс", 20.00));
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Развал-схождение", 60.00));
-        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Компьютерная диагностика", 80.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Р—Р°РјРµРЅР° РјРѕС‚РѕСЂРЅРѕРіРѕ РјР°СЃР»Р°", 45.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Р—Р°РјРµРЅР° РјР°СЃР»СЏРЅРѕРіРѕ С„РёР»СЊС‚СЂР°", 15.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Р—Р°РјРµРЅР° РІРѕР·РґСѓС€РЅРѕРіРѕ С„РёР»СЊС‚СЂР°", 25.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Р—Р°РјРµРЅР° СЃР°Р»РѕРЅРЅРѕРіРѕ С„РёР»СЊС‚СЂР°", 20.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Р”РёР°РіРЅРѕСЃС‚РёРєР° РґРІРёРіР°С‚РµР»СЏ", 80.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Р”РёР°РіРЅРѕСЃС‚РёРєР° С…РѕРґРѕРІРѕР№ С‡Р°СЃС‚Рё", 60.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Р—Р°РјРµРЅР° РїРµСЂРµРґРЅРёС… С‚РѕСЂРјРѕР·РЅС‹С… РєРѕР»РѕРґРѕРє", 120.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Р—Р°РјРµРЅР° Р·Р°РґРЅРёС… С‚РѕСЂРјРѕР·РЅС‹С… РєРѕР»РѕРґРѕРє", 110.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "РЁРёРЅРѕРјРѕРЅС‚Р°Р¶ (4 РєРѕР»РµСЃР°)", 40.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Р‘Р°Р»Р°РЅСЃРёСЂРѕРІРєР° РєРѕР»С‘СЃ", 20.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "Р Р°Р·РІР°Р»-СЃС…РѕР¶РґРµРЅРёРµ", 60.00));
+        serviceTypes.push_back(ServiceType(ServiceType::getNextId(), "РљРѕРјРїСЊСЋС‚РµСЂРЅР°СЏ РґРёР°РіРЅРѕСЃС‚РёРєР°", 80.00));
     }
     
-    // Создаём сотрудников по умолчанию
+    // РЎРѕР·РґР°С‘Рј СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
     if (employees.empty()) {
-        employees.push_back(Employee(Employee::getNextId(), "Смирнов Алексей Петрович", 
-                                     "+375293333333", "Мастер"));
-        employees.push_back(Employee(Employee::getNextId(), "Кузнецов Дмитрий Иванович", 
-                                     "+375294444444", "Мастер"));
+        employees.push_back(Employee(Employee::getNextId(), "РЎРјРёСЂРЅРѕРІ РђР»РµРєСЃРµР№ РџРµС‚СЂРѕРІРёС‡", 
+                                     "+375293333333", "РњР°СЃС‚РµСЂ"));
+        employees.push_back(Employee(Employee::getNextId(), "РљСѓР·РЅРµС†РѕРІ Р”РјРёС‚СЂРёР№ РРІР°РЅРѕРІРёС‡", 
+                                     "+375294444444", "РњР°СЃС‚РµСЂ"));
     }
 }
 
-// Обновление счётчиков ID
+// РћР±РЅРѕРІР»РµРЅРёРµ СЃС‡С‘С‚С‡РёРєРѕРІ ID
 void DataManager::updateIdCounters() {
-    int maxClientId = 0;
+    // Р”Р»СЏ Person::nextId СѓС‡РёС‚С‹РІР°РµРј РєР»РёРµРЅС‚РѕРІ, СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ Рё РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
+    int maxPersonId = 0;
     for (const auto& c : clients) {
-        if (c.getId() > maxClientId) maxClientId = c.getId();
+        if (c.getId() > maxPersonId) maxPersonId = c.getId();
     }
-    Person::setNextId(maxClientId + 1);
+    for (const auto& e : employees) {
+        if (e.getId() > maxPersonId) maxPersonId = e.getId();
+    }
+    for (const auto& u : users) {
+        if (u.getId() > maxPersonId) maxPersonId = u.getId();
+    }
+    Person::setNextId(maxPersonId + 1);
     
     int maxCarId = 0;
     for (const auto& c : cars) {
@@ -84,9 +91,9 @@ void DataManager::updateIdCounters() {
     ServiceOrder::setNextId(maxOrderId + 1);
 }
 
-// Загрузка всех данных
+// Р—Р°РіСЂСѓР·РєР° РІСЃРµС… РґР°РЅРЅС‹С…
 void DataManager::loadAll() {
-    // Создаём папку data если не существует
+    // РЎРѕР·РґР°С‘Рј РїР°РїРєСѓ data РµСЃР»Рё РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚
     #ifdef _WIN32
         _mkdir(dataPath.c_str());
     #else
@@ -95,7 +102,7 @@ void DataManager::loadAll() {
 
     string line;
     
-    // Загрузка пользователей
+    // Р—Р°РіСЂСѓР·РєР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
     ifstream usersIn(usersFile);
     if (usersIn.is_open()) {
         while (getline(usersIn, line)) {
@@ -106,7 +113,7 @@ void DataManager::loadAll() {
         usersIn.close();
     }
     
-    // Загрузка клиентов
+    // Р—Р°РіСЂСѓР·РєР° РєР»РёРµРЅС‚РѕРІ
     ifstream clientsIn(clientsFile);
     if (clientsIn.is_open()) {
         while (getline(clientsIn, line)) {
@@ -117,7 +124,7 @@ void DataManager::loadAll() {
         clientsIn.close();
     }
     
-    // Загрузка сотрудников
+    // Р—Р°РіСЂСѓР·РєР° СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ
     ifstream employeesIn(employeesFile);
     if (employeesIn.is_open()) {
         while (getline(employeesIn, line)) {
@@ -128,7 +135,7 @@ void DataManager::loadAll() {
         employeesIn.close();
     }
     
-    // Загрузка автомобилей
+    // Р—Р°РіСЂСѓР·РєР° Р°РІС‚РѕРјРѕР±РёР»РµР№
     ifstream carsIn(carsFile);
     if (carsIn.is_open()) {
         while (getline(carsIn, line)) {
@@ -139,7 +146,7 @@ void DataManager::loadAll() {
         carsIn.close();
     }
     
-    // Загрузка видов работ
+    // Р—Р°РіСЂСѓР·РєР° РІРёРґРѕРІ СЂР°Р±РѕС‚
     ifstream servicesIn(servicesFile);
     if (servicesIn.is_open()) {
         while (getline(servicesIn, line)) {
@@ -150,7 +157,7 @@ void DataManager::loadAll() {
         servicesIn.close();
     }
     
-    // Загрузка заявок
+    // Р—Р°РіСЂСѓР·РєР° Р·Р°СЏРІРѕРє
     ifstream ordersIn(ordersFile);
     if (ordersIn.is_open()) {
         while (getline(ordersIn, line)) {
@@ -161,16 +168,16 @@ void DataManager::loadAll() {
         ordersIn.close();
     }
     
-    // Инициализация данных по умолчанию если файлы пустые
+    // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РґР°РЅРЅС‹С… РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РµСЃР»Рё С„Р°Р№Р»С‹ РїСѓСЃС‚С‹Рµ
     initDefaultData();
     
-    // Обновление счётчиков
+    // РћР±РЅРѕРІР»РµРЅРёРµ СЃС‡С‘С‚С‡РёРєРѕРІ
     updateIdCounters();
 }
 
-// Сохранение всех данных
+// РЎРѕС…СЂР°РЅРµРЅРёРµ РІСЃРµС… РґР°РЅРЅС‹С…
 void DataManager::saveAll() {
-    // Сохранение пользователей
+    // РЎРѕС…СЂР°РЅРµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
     ofstream usersOut(usersFile);
     if (usersOut.is_open()) {
         for (const auto& u : users) {
@@ -179,7 +186,7 @@ void DataManager::saveAll() {
         usersOut.close();
     }
     
-    // Сохранение клиентов
+    // РЎРѕС…СЂР°РЅРµРЅРёРµ РєР»РёРµРЅС‚РѕРІ
     ofstream clientsOut(clientsFile);
     if (clientsOut.is_open()) {
         for (const auto& c : clients) {
@@ -188,7 +195,7 @@ void DataManager::saveAll() {
         clientsOut.close();
     }
     
-    // Сохранение сотрудников
+    // РЎРѕС…СЂР°РЅРµРЅРёРµ СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ
     ofstream employeesOut(employeesFile);
     if (employeesOut.is_open()) {
         for (const auto& e : employees) {
@@ -197,7 +204,7 @@ void DataManager::saveAll() {
         employeesOut.close();
     }
     
-    // Сохранение автомобилей
+    // РЎРѕС…СЂР°РЅРµРЅРёРµ Р°РІС‚РѕРјРѕР±РёР»РµР№
     ofstream carsOut(carsFile);
     if (carsOut.is_open()) {
         for (const auto& c : cars) {
@@ -206,7 +213,7 @@ void DataManager::saveAll() {
         carsOut.close();
     }
     
-    // Сохранение видов работ
+    // РЎРѕС…СЂР°РЅРµРЅРёРµ РІРёРґРѕРІ СЂР°Р±РѕС‚
     ofstream servicesOut(servicesFile);
     if (servicesOut.is_open()) {
         for (const auto& s : serviceTypes) {
@@ -215,7 +222,7 @@ void DataManager::saveAll() {
         servicesOut.close();
     }
     
-    // Сохранение заявок
+    // РЎРѕС…СЂР°РЅРµРЅРёРµ Р·Р°СЏРІРѕРє
     ofstream ordersOut(ordersFile);
     if (ordersOut.is_open()) {
         for (const auto& o : orders) {
@@ -225,7 +232,7 @@ void DataManager::saveAll() {
     }
 }
 
-// === МЕТОДЫ ДЛЯ РАБОТЫ С КЛИЕНТАМИ ===
+// === РњР•РўРћР”Р« Р”Р›РЇ Р РђР‘РћРўР« РЎ РљР›РР•РќРўРђРњР ===
 
 vector<Client>& DataManager::getClients() {
     return clients;
@@ -279,7 +286,7 @@ vector<Client> DataManager::searchClientsByName(const string& name) const {
     return result;
 }
 
-// === МЕТОДЫ ДЛЯ РАБОТЫ С СОТРУДНИКАМИ ===
+// === РњР•РўРћР”Р« Р”Р›РЇ Р РђР‘РћРўР« РЎ РЎРћРўР РЈР”РќРРљРђРњР ===
 
 vector<Employee>& DataManager::getEmployees() {
     return employees;
@@ -318,7 +325,7 @@ bool DataManager::deleteEmployee(int id) {
     return false;
 }
 
-// === МЕТОДЫ ДЛЯ РАБОТЫ С ПОЛЬЗОВАТЕЛЯМИ ===
+// === РњР•РўРћР”Р« Р”Р›РЇ Р РђР‘РћРўР« РЎ РџРћР›Р¬Р—РћР’РђРўР•Р›РЇРњР ===
 
 vector<User>& DataManager::getUsers() {
     return users;
@@ -366,7 +373,7 @@ bool DataManager::deleteUser(int id) {
     return false;
 }
 
-// === МЕТОДЫ ДЛЯ РАБОТЫ С АВТОМОБИЛЯМИ ===
+// === РњР•РўРћР”Р« Р”Р›РЇ Р РђР‘РћРўР« РЎ РђР’РўРћРњРћР‘РР›РЇРњР ===
 
 vector<Car>& DataManager::getCars() {
     return cars;
@@ -415,7 +422,7 @@ bool DataManager::deleteCar(int id) {
     return false;
 }
 
-// === МЕТОДЫ ДЛЯ РАБОТЫ С ВИДАМИ РАБОТ ===
+// === РњР•РўРћР”Р« Р”Р›РЇ Р РђР‘РћРўР« РЎ Р’РР”РђРњР Р РђР‘РћРў ===
 
 vector<ServiceType>& DataManager::getServiceTypes() {
     return serviceTypes;
@@ -454,7 +461,7 @@ bool DataManager::deleteServiceType(int id) {
     return false;
 }
 
-// === МЕТОДЫ ДЛЯ РАБОТЫ С ЗАЯВКАМИ ===
+// === РњР•РўРћР”Р« Р”Р›РЇ Р РђР‘РћРўР« РЎ Р—РђРЇР’РљРђРњР ===
 
 vector<ServiceOrder>& DataManager::getOrders() {
     return orders;
@@ -534,7 +541,7 @@ bool DataManager::deleteOrder(int id) {
     return false;
 }
 
-// Расчёт стоимости заявки
+// Р Р°СЃС‡С‘С‚ СЃС‚РѕРёРјРѕСЃС‚Рё Р·Р°СЏРІРєРё
 double DataManager::calculateOrderCost(const vector<int>& serviceIds, double discount) const {
     double total = 0.0;
     for (int id : serviceIds) {
@@ -544,7 +551,7 @@ double DataManager::calculateOrderCost(const vector<int>& serviceIds, double dis
         }
     }
     
-    // Применяем скидку
+    // РџСЂРёРјРµРЅСЏРµРј СЃРєРёРґРєСѓ
     if (discount > 0 && discount <= 100) {
         total = total * (1.0 - discount / 100.0);
     }
